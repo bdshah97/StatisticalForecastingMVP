@@ -8,7 +8,10 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
-        allowedHosts: ['supply-chain-forecasting-tool.onrender.com'],
+        allowedHosts: ['supply-chain-forecasting-tool.onrender.com', 'statisticalforecastingmvp.onrender.com'],
+      },
+      preview: {
+        allowedHosts: ['statisticalforecastingmvp.onrender.com', 'supply-chain-forecasting-tool.onrender.com'],
       },
       plugins: [react()],
       define: {
