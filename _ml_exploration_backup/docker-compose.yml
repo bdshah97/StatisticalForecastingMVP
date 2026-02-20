@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - FRONTEND_URL=http://localhost:5173
+      - ML_MODEL_PATH=/app/models/xgboost-model.json
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/dist:/app/dist
+      - ./backend/models:/app/models
+    command: npm run dev
+    networks:
+      - supply-chain
+
+  frontend:
+    build: .
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3000
+      - REACT_APP_USE_BACKEND=true
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+    depends_on:
+      - backend
+    networks:
+      - supply-chain
+
+networks:
+  supply-chain:
+    driver: bridge
