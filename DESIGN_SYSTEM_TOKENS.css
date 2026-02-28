@@ -1,0 +1,241 @@
+/* SSA Design System - Color Tokens from Penpot */
+/* Extracted from: SSA-theme-shadcn 1.pen */
+
+:root {
+  /* SSA Brand Color Palette (Q4 2025) */
+  --ssa-blue: #003399;           /* Primary Blue */
+  --ssa-nepal: #8CA3B2;          /* Light blue-gray */
+  --ssa-black: #000000;          /* Black (backgrounds) */
+  --ssa-white: #FFFFFF;          /* White (text) */
+  --ssa-curious-blue: #0A7CC1;   /* Secondary Blue */
+  --ssa-blumine: #336179;        /* Dark blue-gray */
+  --ssa-christi-green: #1D9A19;  /* Bright green */
+  --ssa-strong-green: #186037;   /* Dark green */
+  --ssa-eastern-blue: #0088A1;   /* Teal/cyan */
+  --ssa-persimmon: #DE4702;      /* Orange-red accent */
+
+  /* Color Palette - Light Mode (Default) */
+  
+  /* Primary Colors */
+  --color-primary: #0f172a;             /* Deep blue/slate base */
+  --color-primary-foreground: #ffffff;
+  
+  /* Secondary Colors */
+  --color-secondary: #f5f5f5;           /* Light gray */
+  --color-secondary-foreground: #171717; /* Dark neutral */
+  
+  /* Background & Foreground */
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  
+  /* Muted (for tertiary content) */
+  --color-muted: #f5f5f5;
+  --color-muted-foreground: #737373;
+  
+  /* Accent Colors */
+  --color-accent: #f5f5f5;
+  --color-accent-foreground: #171717;
+  
+  /* Destructive (Error/Warning) */
+  --color-destructive: #de4702;         /* Orange/red */
+  --color-destructive-foreground: #ffffff;
+  
+  /* Borders & Input */
+  --color-border: #e5e5e5;
+  --color-input: #e5e5e5;
+  --color-ring: #a3a3a3;
+  
+  /* Sidebar */
+  --color-sidebar: #ffffff;
+  --color-sidebar-foreground: #171717;
+  --color-sidebar-accent: #0f172a;
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: #e5e5e5;
+  
+  /* Utility Colors */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  
+  /* Semantic Colors - Success */
+  --color-success: #059669;             /* Emerald green */
+  --color-success-foreground: #f0fdf4;
+  
+  /* Semantic Colors - Warning */
+  --color-warning: #f97316;             /* Orange */
+  --color-warning-foreground: #fff7ed;
+  
+  /* Semantic Colors - Info */
+  --color-info: #3b82f6;                /* Blue */
+  --color-info-foreground: #eff6ff;
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 48px;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+  
+  /* Typography */
+  --font-family: 'Montserrat', 'Avenir Next LT Pro', sans-serif;
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 32px;
+  
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-black: 900;
+  
+  /* Line Heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.4286;
+  --line-height-relaxed: 1.5;
+  --line-height-loose: 1.6;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.2);
+  --shadow-2xl: 0 12px 24px rgba(0, 0, 0, 0.25);
+  
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-base: 200ms ease-in-out;
+  --transition-slow: 300ms ease-in-out;
+}
+
+/* Dark Mode (Existing Dark Theme Support) */
+@media (prefers-color-scheme: dark), [class~="dark"] {
+  :root {
+    /* Primary (remains same) */
+    --color-primary: #0f172a;
+    --color-primary-foreground: #ffffff;
+    
+    /* Secondary - Dark variant */
+    --color-secondary: #262626;
+    --color-secondary-foreground: #fafafa;
+    
+    /* Background - Dark */
+    --color-background: #020617;
+    --color-foreground: #f1f5f9;
+    
+    /* Muted - Dark variant */
+    --color-muted: #262626;
+    --color-muted-foreground: #a3a3a3;
+    
+    /* Accent - Dark variant */
+    --color-accent: #262626;
+    --color-accent-foreground: #fafafa;
+    
+    /* Destructive */
+    --color-destructive: #ff6669;
+    --color-destructive-foreground: #ffffff;
+    
+    /* Borders */
+    --color-border: #334155;
+    --color-input: #334155;
+    --color-ring: #a3a3a3;
+    
+    /* Sidebar - Dark */
+    --color-sidebar: #1e293b;
+    --color-sidebar-foreground: #f1f5f9;
+    --color-sidebar-accent: #4f46e5;
+    --color-sidebar-accent-foreground: #ffffff;
+    --color-sidebar-border: #334155;
+  }
+}
+
+/* Accent Color Variants (from Penpot theme variations) */
+[data-accent="red"] {
+  --color-accent-light-bg: #fef2f2;
+  --color-accent-primary: #dc2626;
+}
+
+[data-accent="rose"] {
+  --color-accent-light-bg: #fff1f2;
+  --color-accent-primary: #e11d48;
+}
+
+[data-accent="orange"] {
+  --color-accent-light-bg: #fff7ed;
+  --color-accent-primary: #ea580c;
+}
+
+[data-accent="green"] {
+  --color-accent-light-bg: #f0fdf4;
+  --color-accent-primary: #059669;
+}
+
+[data-accent="blue"] {
+  --color-accent-light-bg: #eff6ff;
+  --color-accent-primary: #2563eb;
+}
+
+[data-accent="violet"] {
+  --color-accent-light-bg: #f5f3ff;
+  --color-accent-primary: #7c3aed;
+}
+
+/* Base Color Schema Variants */
+[data-base="neutral"] {
+  --color-base-50: #fafafa;
+  --color-base-100: #f5f5f5;
+  --color-base-300: #d4d4d8;
+  --color-base-500: #a3a3a3;
+  --color-base-700: #404040;
+  --color-base-900: #171717;
+}
+
+[data-base="gray"] {
+  --color-base-50: #f9fafb;
+  --color-base-100: #f3f4f6;
+  --color-base-300: #d1d5db;
+  --color-base-500: #9ca3af;
+  --color-base-700: #374151;
+  --color-base-900: #111827;
+}
+
+[data-base="slate"] {
+  --color-base-50: #f8fafc;
+  --color-base-100: #f1f5f9;
+  --color-base-300: #cbd5e1;
+  --color-base-500: #64748b;
+  --color-base-700: #334155;
+  --color-base-900: #0f172a;
+}
+
+[data-base="stone"] {
+  --color-base-50: #fafaf9;
+  --color-base-100: #f5f5f4;
+  --color-base-300: #d6d3d1;
+  --color-base-500: #a8a29e;
+  --color-base-700: #44403c;
+  --color-base-900: #1c1917;
+}
+
+[data-base="zinc"] {
+  --color-base-50: #fafafa;
+  --color-base-100: #f4f4f5;
+  --color-base-300: #d4d4d8;
+  --color-base-500: #a1a1aa;
+  --color-base-700: #3f3f46;
+  --color-base-900: #18181b;
+}

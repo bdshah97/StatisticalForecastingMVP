@@ -17,7 +17,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({ label, value, suffix, descrip
   const isNegative = trend === 'down';
 
   return (
-    <div className="bg-slate-900 p-5 rounded-[2rem] border border-slate-800 shadow-xl transition-all hover:border-indigo-500/50 group relative">
+    <div className="bg-black p-5 rounded-[2rem] border border-slate-800 shadow-xl transition-all hover:border-blue-500 group relative" style={{ borderColor: 'var(--ssa-nepal)' }}>
       <div className="relative z-10">
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-2">
@@ -46,13 +46,13 @@ const MetricsCard: React.FC<MetricsCardProps> = ({ label, value, suffix, descrip
           )}
         </div>
         <div className="flex items-baseline gap-1">
-          <h3 className="text-3xl font-black text-slate-100 group-hover:text-indigo-400 transition-colors tracking-tighter">{value}</h3>
+          <h3 className="text-3xl font-black text-slate-100 group-hover:text-blue-400 transition-colors tracking-tighter" style={{ color: 'var(--ssa-white)' }}>{value}</h3>
           {suffix && <span className="text-xs font-bold text-slate-500">{suffix}</span>}
         </div>
         <p className="text-[9px] text-slate-500 mt-3 font-bold uppercase tracking-wide leading-tight">{description}</p>
       </div>
-      {/* Subtle background glow on hover */}
-      <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-indigo-600/5 rounded-full blur-2xl group-hover:bg-indigo-600/10 transition-colors" />
+      {/* Subtle background accent on hover - SSA Blue */}
+      <div className="absolute -right-4 -bottom-4 w-24 h-24 rounded-full blur-2xl group-hover:opacity-100 transition-opacity opacity-0" style={{ backgroundColor: 'var(--ssa-curious-blue)', opacity: '0.05' }} />
     </div>
   );
 };

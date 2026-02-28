@@ -150,8 +150,8 @@ const getQualityPageData = (comparisonData: any[], forecastStartDate: string): a
   const [forecastYear, forecastMonth, forecastDay] = forecastStartDate.split('-').map(Number);
   if (!forecastYear || !forecastMonth) return comparisonData;
   
-  // Calculate 7 months back from forecast start (to get Jan in 8/1/2025 example)
-  let backMonth = forecastMonth - 7;
+  // Calculate 6 months back from forecast start (to get the test window start)
+  let backMonth = forecastMonth - 6;
   let backYear = forecastYear;
   if (backMonth <= 0) {
     backMonth += 12;
@@ -166,19 +166,19 @@ const getQualityPageData = (comparisonData: any[], forecastStartDate: string): a
     excludeYear -= 1;
   }
   
-  // Filter: include dates >= 7-months-back and < 1-month-before-forecast
-  // This gives us 6 months (e.g., Feb-Jun when forecast is Aug)
+  // Filter: include dates >= 6-months-back and <= 1-month-before-forecast
+  // This gives us 6 months (e.g., Aug-Jan when forecast is Feb)
   return comparisonData.filter(d => {
     const [year, month] = d.date.split('-').map(Number);
     if (!year || !month) return false;
     
-    // Date must be >= back window start (7 months back)
+    // Date must be >= back window start (6 months back)
     if (year < backYear) return false;
     if (year === backYear && month < backMonth) return false;
     
-    // Date must be < month right before forecast (exclude that month)
+    // Date must be <= month right before forecast (include that month)
     if (year > excludeYear) return false;
-    if (year === excludeYear && month >= excludeMonth) return false;
+    if (year === excludeYear && month > excludeMonth) return false;
     
     return true;
   });
@@ -210,7 +210,7 @@ const downsampleData = (data: any[], maxPoints: number = 1000): any[] => {
 const CustomTrendTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-slate-900 border border-slate-700 p-4 rounded-2xl shadow-2xl backdrop-blur-xl">
+      <div className="bg-black border border-slate-700 p-4 rounded-2xl shadow-2xl backdrop-blur-xl">
         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-800 pb-2">{label}</p>
         <div className="space-y-2">
           {payload.map((entry: any, index: number) => {
@@ -262,9 +262,10 @@ const SearchableSelect: React.FC<{
   const containerRef = useRef<HTMLDivElement>(null);
 
   const filteredOptions = useMemo(() => {
-    const opts = ['All', ...options];
-    if (!search) return opts;
-    return opts.filter(opt => opt.toLowerCase().includes(search.toLowerCase()));
+    // Don't prepend 'All' here - the caller should handle that
+    // This allows callers to pass ['All', ...cats] if they want
+    if (!search) return options;
+    return options.filter(opt => opt.toLowerCase().includes(search.toLowerCase()));
   }, [options, search]);
 
   useEffect(() => {
@@ -285,18 +286,18 @@ const SearchableSelect: React.FC<{
       </div>
       <div 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-[10px] font-bold text-slate-200 cursor-pointer hover:border-indigo-500 transition-all shadow-inner"
+        className="flex items-center justify-between w-full p-2.5 bg-black border border-slate-800 rounded-xl text-[10px] font-bold text-slate-200 cursor-pointer hover:border-blue-600 transition-all shadow-inner"
       >
         <span className={value === 'All' ? 'text-slate-500' : 'text-slate-200'}>{value === 'All' ? placeholder : value}</span>
         <ChevronDown size={14} className={`text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </div>
       
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-[100] p-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-black border border-slate-700 rounded-2xl shadow-2xl z-[100] p-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
           <input 
             autoFocus
             type="text"
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-[10px] text-white outline-none focus:ring-1 focus:ring-indigo-500 mb-2"
+            className="w-full bg-black border border-slate-800 rounded-lg px-3 py-2 text-[10px] text-white outline-none focus:ring-1 focus:ring-blue-600 mb-2"
             placeholder="Type to filter..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -311,7 +312,8 @@ const SearchableSelect: React.FC<{
                     setIsOpen(false);
                     setSearch('');
                   }}
-                  className={`px-3 py-2 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${value === opt ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                  className={`px-3 py-2 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${value === opt ? 'text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                  style={value === opt ? { backgroundColor: 'var(--ssa-blue)' } : undefined}
                 >
                   {opt}
                 </div>
@@ -358,18 +360,18 @@ const MultiSearchableSelect: React.FC<{
     <div className="w-full space-y-3 relative" ref={containerRef}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20">{icon}</div>
+          <div className="p-1.5 rounded-lg border" style={{ backgroundColor: 'var(--ssa-blue)', backgroundImage: 'linear-gradient(135deg, var(--ssa-blue), var(--ssa-curious-blue))', opacity: 0.1, borderColor: 'var(--ssa-curious-blue)' }}>{icon}</div>
           <h3 className="text-[10px] font-black text-slate-200 uppercase tracking-widest">{label}</h3>
         </div>
         <div className="flex gap-3">
-           <button onClick={(e) => { e.stopPropagation(); onSelectAll(); }} className="text-[8px] font-black uppercase text-indigo-400 hover:text-indigo-300 transition-colors">Select All</button>
+           <button onClick={(e) => { e.stopPropagation(); onSelectAll(); }} className="text-[8px] font-black uppercase hover:underline transition-colors" style={{ color: 'var(--ssa-curious-blue)' }}>Select All</button>
            <button onClick={(e) => { e.stopPropagation(); onClear(); }} className="text-[8px] font-black uppercase text-slate-500 hover:text-slate-300 transition-colors">Clear</button>
         </div>
       </div>
       
       <div 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-[10px] font-bold text-slate-200 cursor-pointer hover:border-indigo-500 transition-all shadow-inner"
+        className="flex items-center justify-between w-full p-2.5 bg-black border border-slate-800 rounded-xl text-[10px] font-bold text-slate-200 cursor-pointer hover:border-blue-600 transition-all shadow-inner"
       >
         <div className="flex flex-wrap gap-1 items-center max-w-[90%] overflow-hidden">
           {selected.length === 0 ? (
@@ -378,7 +380,7 @@ const MultiSearchableSelect: React.FC<{
             <span className="text-slate-200">All Entities Selected</span>
           ) : (
             selected.slice(0, 2).map(s => (
-              <span key={s} className="bg-indigo-600 px-2 py-0.5 rounded text-[9px] text-white">{s}</span>
+              <span key={s} className="px-2 py-0.5 rounded text-[9px] text-white" style={{ backgroundColor: 'var(--ssa-blue)' }}>{s}</span>
             ))
           )}
           {selected.length > 2 && <span className="text-slate-500 text-[8px]">+{selected.length - 2} more</span>}
@@ -387,11 +389,11 @@ const MultiSearchableSelect: React.FC<{
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-[500] p-2 animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-black border border-slate-700 rounded-2xl shadow-2xl z-[500] p-2 animate-in fade-in zoom-in-95 duration-200">
           <input 
             autoFocus
             type="text"
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-[10px] text-white outline-none focus:ring-1 focus:ring-indigo-500 mb-2"
+            className="w-full bg-black border border-slate-800 rounded-lg px-3 py-2 text-[10px] text-white outline-none focus:ring-1 focus:ring-blue-600 mb-2"
             placeholder="Type SKU name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -405,7 +407,8 @@ const MultiSearchableSelect: React.FC<{
                     e.stopPropagation();
                     onToggle(opt);
                   }}
-                  className={`px-3 py-2 rounded-lg text-[10px] font-bold cursor-pointer transition-colors flex items-center justify-between ${selected.includes(opt) ? 'bg-indigo-600/20 text-indigo-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                  className={`px-3 py-2 rounded-lg text-[10px] font-bold cursor-pointer transition-colors flex items-center justify-between ${selected.includes(opt) ? 'text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                  style={selected.includes(opt) ? { backgroundColor: 'var(--ssa-blue)', color: 'var(--ssa-white)' } : undefined}
                 >
                   <span>{opt}</span>
                   {selected.includes(opt) && <Check size={12} />}
@@ -424,8 +427,8 @@ const MultiSearchableSelect: React.FC<{
 const SchemaModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in">
-      <div className="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-[2.5rem] shadow-2xl p-8 overflow-y-auto max-h-[90vh]">
+    <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
+      <div className="bg-black border border-slate-700 w-full max-w-2xl rounded-[2.5rem] shadow-2xl p-8 overflow-y-auto max-h-[90vh]">
         <div className="flex justify-between items-start mb-6">
           <div>
             <h2 className="text-2xl font-black text-white uppercase tracking-tight">Data Schema Guide</h2>
@@ -434,20 +437,20 @@ const SchemaModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpe
           <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full text-slate-400"><X size={20} /></button>
         </div>
         <div className="space-y-6 text-slate-300">
-          <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
-            <h3 className="text-[10px] font-black uppercase text-indigo-400 mb-2">Historical Sales (sales.csv)</h3>
+          <div className="p-4 bg-black rounded-2xl border border-slate-800">
+            <h3 className="text-[10px] font-black uppercase mb-2" style={{ color: 'var(--ssa-curious-blue)' }}>Historical Sales (sales.csv)</h3>
             <p className="text-[11px] mb-2 font-mono text-slate-500">date (YYYY-MM-DD), sku, category, quantity</p>
           </div>
-          <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+          <div className="p-4 bg-black rounded-2xl border border-slate-800">
             <h3 className="text-[10px] font-black uppercase text-emerald-400 mb-2">Attributes (attr.csv)</h3>
             <p className="text-[11px] mb-2 font-mono text-slate-500">sku, category, leadTimeDays, unitCost, sellingPrice, serviceLevel</p>
           </div>
-          <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+          <div className="p-4 bg-black rounded-2xl border border-slate-800">
             <h3 className="text-[10px] font-black uppercase text-orange-400 mb-2">Inventory (inv.csv)</h3>
             <p className="text-[11px] mb-2 font-mono text-slate-500">sku, onHand</p>
           </div>
         </div>
-        <button onClick={onClose} className="w-full mt-8 py-4 bg-indigo-600 rounded-2xl font-black text-[11px] uppercase tracking-widest text-white shadow-lg">Acknowledged</button>
+        <button onClick={onClose} className="w-full mt-8 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest text-white shadow-lg" style={{ backgroundColor: 'var(--ssa-blue)' }}>Acknowledged</button>
       </div>
     </div>
   );
@@ -544,194 +547,168 @@ const App: React.FC = () => {
     const file = e.target.files?.[0]; 
     if (!file) return;
     
-    // Clear any previous errors
     setUploadError(null);
     const reader = new FileReader();
     
-    console.log(`📤 Starting upload: ${type} file (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
-    
     reader.onload = (event) => {
       const text = event.target?.result as string;
-      const lines = text.split('\n').filter(l => l.trim().length > 0); // Filter empty lines
+      const lines = text.split('\n').filter(l => l.trim().length > 0);
       
-      console.log(`📋 Total lines: ${lines.length} (including header)`);
-      
-      // Process data in chunks to avoid UI blocking
-      const processChunk = (startIdx: number) => {
-        const chunkSize = 5000;
-        const endIdx = Math.min(startIdx + chunkSize, lines.length);
-        const chunk = lines.slice(startIdx, endIdx);
-        
-        try {
-          if (type === 'hist') {
-            const newData = chunk
-              .filter(l => l.trim().length > 0 && l.includes(','))
-              .map((line, idx) => {
-                const p = line.split(',').map(s => s.trim()); 
-                if (idx < 2) console.log(`  📝 Row ${idx}: ${p.join(' | ')}`); // Log first 2 data rows
-                return { 
-                  date: normalizeDateFormat(parseDate(p[2])),  // Parse multiple date formats, then normalize
-                  sku: p[1],   // Column 1 is the SKU
-                  category: p[0],  // Column 0 is the category
-                  quantity: parseInt(p[3]) || 0,  // Column 3 is the quantity
-                  type: 'hist' as const
-                };
-              })
-              .filter(d => d.sku && d.date && d.quantity > 0);
-            if (newData.length > 0) {
-              setData(prev => [...prev, ...newData]);
-              setHasUserUploadedData(prev => ({ ...prev, hist: true }));
-              console.log(`✅ Processed ${newData.length} hist records (chunk ${startIdx}-${endIdx}):`, newData.slice(0, 2)); // Log first 2 records
-            } else if (startIdx === 1) {
-              // Show error only on first chunk if no valid data found
-              setUploadError({ type: 'hist', message: 'Sales CSV format error. Expected: category, sku, date (YYYY-MM-DD, M/D/YYYY, or MM/DD/YYYY), quantity' });
-              console.warn(`⚠️ No valid hist records found. Check format: category, sku, date, quantity`);
-            }
-          } else if (type === 'inv') {
-            const newInv = chunk
-              .filter(l => l.trim().length > 0 && l.includes(','))
-              .map(line => {
-                const p = line.split(',').map(s => s.trim()); 
-                return { 
-                  sku: p[0], 
-                  onHand: parseInt(p[1]) || 0, 
-                  lastUpdated: new Date().toISOString(),
-                  type: 'inv' as const
-                } as InventoryLevel;
-              })
-              .filter(d => d.sku);
-            if (newInv.length > 0) {
-              setInventory(prev => [...prev, ...newInv]);
-              setHasUserUploadedData(prev => ({ ...prev, inv: true }));
-              console.log(`✅ Processed ${newInv.length} inventory records (chunk ${startIdx}-${endIdx})`);
-            } else if (startIdx === 1) {
-              setUploadError({ type: 'inv', message: 'Inventory CSV format error. Expected: sku, onHand' });
-              console.warn(`⚠️ No valid inventory records found. Check format: sku, onHand`);
-            }
-          } else if (type === 'attr') {
-            // Proper CSV parser that respects quoted fields
-            const parseCSVLine = (line: string): string[] => {
-              const result: string[] = [];
-              let current = '';
-              let insideQuotes = false;
-              
-              for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                const nextChar = line[i + 1];
-                
-                if (char === '"') {
-                  insideQuotes = !insideQuotes;
-                } else if (char === ',' && !insideQuotes) {
-                  result.push(current.trim());
-                  current = '';
-                } else {
-                  current += char;
-                }
-              }
-              result.push(current.trim());
-              return result;
-            };
+      try {
+        if (type === 'hist') {
+          const newData: DataPoint[] = [];
+          
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            if (!line.trim() || line.trim().startsWith('#')) continue;
             
-            const cleanCurrency = (val: string) => {
-              // Remove quotes, dollar signs, commas, and spaces
-              return val.replace(/["'$,\s]/g, '').trim();
-            };
-
-            const newAttr = chunk
-              .filter(l => l.trim().length > 0 && l.includes(','))
-              .map(line => {
-                const p = parseCSVLine(line);
-                
-                return { 
-                  sku: p[0], 
-                  category: p[1], 
-                  leadTimeDays: parseInt(p[2]) || 30, 
-                  sellingPrice: parseFloat(cleanCurrency(p[3])) || 150,  // p[3] is sellingPrice
-                  unitCost: parseFloat(cleanCurrency(p[4])) || 100,       // p[4] is unitCost
-                  serviceLevel: parseFloat(p[5]) || 0.95,
-                  type: 'attr' as const
-                } as ProductAttribute;
-              })
-              .filter(d => d.sku);
-            if (newAttr.length > 0) {
-              setAttributes(prev => [...prev, ...newAttr]);
-              setHasUserUploadedData(prev => ({ ...prev, attr: true }));
-              console.log(`✅ Processed ${newAttr.length} attribute records (chunk ${startIdx}-${endIdx}):`, newAttr.slice(0, 2));
-            } else if (startIdx === 1) {
-              setUploadError({ type: 'attr', message: 'Attributes CSV format error. Expected: sku, category, leadTimeDays, sellingPrice, unitCost, serviceLevel' });
-              console.warn(`⚠️ No valid attribute records found. Check format.`);
+            const p = line.split(',').map(s => s.trim());
+            let date = '', sku = '', category = '', quantity = 0;
+            
+            if (p.length >= 4) {
+              category = p[0];
+              sku = p[1];
+              date = normalizeDateFormat(parseDate(p[2]));
+              quantity = parseInt(p[3]) || 0;
+            } else if (p.length === 2) {
+              date = normalizeDateFormat(parseDate(p[0]));
+              quantity = parseInt(p[1]) || 0;
+              sku = file.name.split('_')[0].toUpperCase() || 'UNKNOWN-SKU';
+              category = 'Unspecified';
+            } else {
+              continue;
             }
-          } else if (type === 'prod') {
-            const newPlans = chunk
-              .filter(l => l.trim().length > 0 && l.includes(','))
-              .map(line => {
-                const p = line.split(',').map(s => s.trim()); 
-                const quantity = parseInt(p[2]) || 0;
-                if (quantity <= 0) return null;
-                return { 
-                  id: `${Date.now()}-${Math.random()}`, 
-                  sku: p[0], 
-                  date: p[1], 
-                  quantity, 
-                  type: (p[3] || 'production') as 'production' | 'po'
-                } as ProductionPlan;
-              })
-              .filter((p): p is ProductionPlan => p !== null);
-            if (newPlans.length > 0) {
-              setFilters(f => ({ ...f, productionPlans: [...f.productionPlans, ...newPlans] }));
-              setHasUserUploadedData(prev => ({ ...prev, prod: true }));
-              console.log(`✅ Processed ${newPlans.length} production plan records (chunk ${startIdx}-${endIdx})`);
-            } else if (startIdx === 1) {
-              setUploadError({ type: 'prod', message: 'Production CSV format error. Expected: sku, date, quantity, type (production|po)' });
-              console.warn(`⚠️ No valid production records found. Check format.`);
+            
+            if (date && sku && quantity > 0) {
+              newData.push({ date, sku, category, quantity });
             }
           }
-        } catch (err) {
-          console.error(`❌ Error processing ${type} chunk:`, err);
-        }
-        
-        // Schedule next chunk if there are more lines
-        if (endIdx < lines.length) {
-          requestAnimationFrame(() => processChunk(endIdx));
-        } else {
-          console.log(`🎉 Upload complete: ${type}`);
-          if (type === 'hist') {
-            console.log(`💡 Click "Run Analysis" to refresh forecasts with your new data`);
+          
+          if (newData.length > 0) {
+            setData(prev => [...prev, ...newData]);
+            setHasUserUploadedData(prev => ({ ...prev, hist: true }));
+          } else {
+            setUploadError({ type: 'hist', message: 'Sales CSV format error. Expected: (category, sku, date, quantity) OR (date, quantity)' });
+          }
+        } else if (type === 'inv') {
+          const newInv: InventoryLevel[] = [];
+          
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            if (!line.trim() || !line.includes(',')) continue;
+            
+            const p = line.split(',').map(s => s.trim());
+            if (!p[0]) continue;
+            
+            newInv.push({
+              sku: p[0],
+              onHand: parseInt(p[1]) || 0,
+              lastUpdated: new Date().toISOString(),
+              type: 'inv' as const
+            });
+          }
+          
+          if (newInv.length > 0) {
+            setInventory(prev => [...prev, ...newInv]);
+            setHasUserUploadedData(prev => ({ ...prev, inv: true }));
+          } else {
+            setUploadError({ type: 'inv', message: 'Inventory CSV format error. Expected: sku, onHand' });
+          }
+        } else if (type === 'attr') {
+          const cleanCurrency = (val: string) => val.replace(/["'$,\s]/g, '').trim();
+          const newAttr: ProductAttribute[] = [];
+          
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            if (!line.trim() || !line.includes(',')) continue;
+            
+            const p = line.split(',').map(s => s.trim());
+            if (!p[0]) continue;
+            
+            newAttr.push({
+              sku: p[0],
+              category: p[1] || 'Unspecified',
+              leadTimeDays: parseInt(p[2]) || 30,
+              sellingPrice: parseFloat(cleanCurrency(p[3])) || 150,
+              unitCost: parseFloat(cleanCurrency(p[4])) || 100,
+              serviceLevel: parseFloat(p[5]) || 0.95,
+              type: 'attr' as const
+            });
+          }
+          
+          if (newAttr.length > 0) {
+            setAttributes(prev => [...prev, ...newAttr]);
+            setHasUserUploadedData(prev => ({ ...prev, attr: true }));
+          } else {
+            setUploadError({ type: 'attr', message: 'Attributes CSV format error. Expected: sku, category, leadTimeDays, sellingPrice, unitCost, serviceLevel' });
+          }
+        } else if (type === 'prod') {
+          const newPlans: ProductionPlan[] = [];
+          
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            if (!line.trim() || !line.includes(',')) continue;
+            
+            const p = line.split(',').map(s => s.trim());
+            const quantity = parseInt(p[2]) || 0;
+            if (quantity <= 0 || !p[0]) continue;
+            
+            newPlans.push({
+              id: `${Date.now()}-${Math.random()}`,
+              sku: p[0],
+              date: p[1],
+              quantity,
+              type: (p[3] || 'production') as 'production' | 'po'
+            });
+          }
+          
+          if (newPlans.length > 0) {
+            setFilters(f => ({ ...f, productionPlans: [...f.productionPlans, ...newPlans] }));
+            setHasUserUploadedData(prev => ({ ...prev, prod: true }));
+          } else {
+            setUploadError({ type: 'prod', message: 'Production CSV format error. Expected: sku, date, quantity, type (production|po)' });
           }
         }
-      };
-      
-      // Start chunked processing (skip header row at index 0)
-      processChunk(1);
+      } catch (err) {
+        console.error(`Error processing ${type}:`, err);
+        setUploadError({ type, message: 'Error parsing file. Check format.' });
+      }
     };
     
     reader.onerror = () => {
-      console.error(`❌ Error reading file: ${file.name}`);
+      console.error(`Error reading file: ${file.name}`);
     };
     
     reader.readAsText(file);
   };
 
-  // Compute available SKUs from data
+  // Enrich data with categories from attributes (attributes take priority over CSV category)
+  const enrichedData = useMemo(() => {
+    return data.map(d => {
+      const attr = attributes.find(a => a.sku === d.sku);
+      const category = attr ? attr.category : d.category;
+      return { ...d, category };
+    });
+  }, [data, attributes]);
+
+  // Compute available SKUs from enrichedData
   const availableSKUs = useMemo(() => {
-    let skus = Array.from(new Set(data.map(d => d.sku))).sort() as string[];
+    let skus = Array.from(new Set(enrichedData.map(d => d.sku))).sort() as string[];
     
-    // If real data has been uploaded, exclude sample SKUs from the list
     if (hasUserUploadedData.hist) {
       const sampleSkuSet = new Set(SKUS);
       skus = skus.filter((sku: string) => !sampleSkuSet.has(sku));
     }
     
-    console.log(`📊 Available SKUs from data: ${skus.join(', ')}`);
     return skus;
-  }, [data, hasUserUploadedData.hist]);
+  }, [enrichedData, hasUserUploadedData.hist]);
 
   // When real data is uploaded, suggest updating historicalDataEndDate to the latest real data date
   useEffect(() => {
-    if (hasUserUploadedData.hist && data.length > 0) {
+    if (hasUserUploadedData.hist && enrichedData.length > 0) {
       // Find the latest date in the real data (excluding sample data)
       const sampleSkuSet = new Set(SKUS);
-      const realDataPoints = data.filter(d => !sampleSkuSet.has(d.sku));
+      const realDataPoints = enrichedData.filter(d => !sampleSkuSet.has(d.sku));
       
       if (realDataPoints.length > 0) {
         const latestRealDate = realDataPoints.reduce((max, d) => d.date > max ? d.date : max, realDataPoints[0].date);
@@ -739,22 +716,23 @@ const App: React.FC = () => {
         console.log(`📅 Updated historicalDataEndDate to latest real data date: ${latestRealDate}`);
       }
     }
-  }, [hasUserUploadedData.hist]);
+  }, [hasUserUploadedData.hist, enrichedData]);
 
-  // Compute available categories from data
+  // Compute available categories from enrichedData
   const availableCategories = useMemo(() => {
-    let filteredData = data;
+    let filteredData = enrichedData;
     
     // If real data has been uploaded, exclude sample data
     if (hasUserUploadedData.hist) {
       const sampleSkuSet = new Set(SKUS);
-      filteredData = data.filter(d => !sampleSkuSet.has(d.sku));
+      filteredData = enrichedData.filter(d => !sampleSkuSet.has(d.sku));
     }
     
     const cats = Array.from(new Set(filteredData.map(d => d.category).filter(c => c))).sort();
-    console.log(`📂 Available categories from data: ${cats.join(', ')}`);
-    return ['All', ...cats];
-  }, [data, hasUserUploadedData.hist]);
+    const result = ['All', ...cats];
+    
+    return result;
+  }, [enrichedData, hasUserUploadedData.hist]);
 
   // Update filter to include available SKUs and handle sample data exclusion
   useEffect(() => {
@@ -767,10 +745,7 @@ const App: React.FC = () => {
         const realSkus = availableSKUs.filter(sku => !sampleSkuSet.has(sku));
         if (realSkus.length > 0) {
           skusToUse = realSkus;
-          console.log(`🔄 Real data detected: excluding ${sampleSkuSet.size} sample SKUs, using ${realSkus.length} real SKUs`);
         }
-      } else {
-        console.log(`🔄 Using all available SKUs: ${availableSKUs.join(', ')}`);
       }
       
       // Create fresh filter state with determined SKUs and reset category
@@ -796,7 +771,11 @@ const App: React.FC = () => {
   // This ensures the new SKUs and categories are properly selected first
 
   const processedData = useMemo(() => {
-    let d = committedSettings.filters.applyAnomalyCleaning ? cleanAnomalies(data) : data;
+    let d = committedSettings.filters.applyAnomalyCleaning ? cleanAnomalies(enrichedData) : enrichedData;
+    
+    // Show all categories present in data BEFORE filtering
+    const availableInData = Array.from(new Set(d.map(item => item.category).filter(c => c))).sort();
+    
     const filtered = d.filter(item => {
       const itemDate = new Date(item.date).getTime();
       const start = new Date(committedSettings.filters.startDate).getTime();
@@ -807,11 +786,12 @@ const App: React.FC = () => {
       return matchesDate && matchesSku && matchesCategory;
     }).sort((a, b) => a.date.localeCompare(b.date));
     
-    // Log which SKUs are actually in processedData
+    // Log detailed category filtering info
     const skusInProcessed = Array.from(new Set(filtered.map(d => d.sku))).sort();
-    console.log(`📋 processedData: ${filtered.length} points, SKUs in data: [${skusInProcessed.join(', ')}], filter SKUs: [${committedSettings.filters.skus.join(', ')}]`);
+    const categoriesInProcessed = Array.from(new Set(filtered.map(d => d.category))).sort();
+    // Verbose logging suppressed for large datasets
     return filtered;
-  }, [data, committedSettings, historicalDataEndDate]);
+  }, [enrichedData, committedSettings, historicalDataEndDate]);
 
   const aggregatedData = useMemo(() => {
     const map = new Map<string, number>();
@@ -824,7 +804,7 @@ const App: React.FC = () => {
     const maxQty = result.length > 0 ? Math.max(...result.map(r => r.quantity)) : 0;
     const sampleValues = result.slice(0, 3).map(r => `${r.date}:${r.quantity}`).join(', ');
     
-    console.log(`📊 aggregatedData: ${result.length} points, avg: ${avgQty}, min: ${minQty}, max: ${maxQty}, sample: [${sampleValues}]`);
+    // Aggregation complete - logging suppressed for large datasets
     return result;
   }, [processedData]);
 
@@ -842,12 +822,27 @@ const App: React.FC = () => {
       return new Map();
     }
     
-    // Get unique SKUs from filter selections (not from processedData) to respect slicer and include all forecast periods
-    const uniqueSkus = committedSettings.filters.skus.length > 0 
-      ? committedSettings.filters.skus 
-      : Array.from(new Set(data.map(d => d.sku))).sort();
+    // IMPORTANT: Respect BOTH category filter AND SKU filter when determining forecast SKUs
+    let candidateSkus = Array.from(new Set(enrichedData.map(d => d.sku)));
     
-    console.log(`🎯 Per-SKU forecasting for: [${uniqueSkus.join(', ')}]`);
+    // Apply category filter first
+    if (committedSettings.filters.category !== 'All') {
+      const skusInCategory = enrichedData
+        .filter(d => d.category === committedSettings.filters.category)
+        .map(d => d.sku);
+      candidateSkus = candidateSkus.filter(sku => skusInCategory.includes(sku));
+    }
+    
+    // Then apply SKU filter
+    if (committedSettings.filters.skus.length > 0) {
+      candidateSkus = candidateSkus.filter(sku => committedSettings.filters.skus.includes(sku));
+    }
+    
+    const uniqueSkus = Array.from(new Set(candidateSkus)).sort();
+    
+    if (uniqueSkus.length > 0) {
+      console.log(`🎯 Per-SKU forecasting for: ${uniqueSkus.length} SKUs`);
+    }
     
     const skuLevelForecasts = new Map<string, ForecastPoint[]>();
     
@@ -855,15 +850,11 @@ const App: React.FC = () => {
       // Use ALL available data for forward forecast (no 6-month cutoff)
       // The 6-month holdout is only for backtest validation, not production forecasting
       // This ensures HW seasonal indices align correctly with forecast dates
-      const skuData = data.filter(d => d.sku === sku && d.date <= historicalDataEndDate).sort((a, b) => a.date.localeCompare(b.date));
+      const skuData = enrichedData.filter(d => d.sku === sku && d.date <= historicalDataEndDate).sort((a, b) => a.date.localeCompare(b.date));
       
       if (skuData.length === 0) {
-        console.log(`⚠️ SKU ${sku}: No historical data found`);
         return;
       }
-      
-      console.log(`📊 SKU ${sku}: ${skuData.length} historical points, date range: ${skuData[0].date} to ${skuData[skuData.length-1].date}`);
-      console.log(`📅 Forward forecast uses ALL data through: ${historicalDataEndDate}`);
       
       // Calculate forecast for this SKU
       // Pass historicalDataEndDate so forecast displays from the intended start point
@@ -878,7 +869,7 @@ const App: React.FC = () => {
         autoDetectHW
       );
       
-      console.log(`📈 SKU ${sku}: calculateForecast returned ${skuForecast.length} points`);
+      // Forecast calculated successfully
       
       // Apply market adjustments per-SKU
       if (committedSettings.filters.includeExternalTrends && marketAdj) {
@@ -891,7 +882,6 @@ const App: React.FC = () => {
       
       // Get per-SKU attributes for accurate pricing
       const skuAttribute = attributes.find(a => a.sku === sku);
-      console.log(`💰 SKU ${sku}: Found attribute:`, skuAttribute ? `Price=$${skuAttribute.sellingPrice}, Cost=$${skuAttribute.unitCost}` : 'NOT FOUND - using defaults');
       
       // Calculate supply chain metrics with per-SKU pricing
       const enrichedForecast = calculateSupplyChainMetricsPerSku(
@@ -911,14 +901,12 @@ const App: React.FC = () => {
       const forecastOnly = enrichedForecast.filter(f => f.isForecast);
       const totalForecastQty = forecastOnly.reduce((s, f) => s + (f.scenarioForecast || 0), 0);
       const totalRevenue = forecastOnly.reduce((s, f) => s + (f.projectedRevenue || 0), 0);
-      console.log(`✅ SKU ${sku}: ${totalForecastQty} units forecast, $${totalRevenue} projected revenue`);
       
       skuLevelForecasts.set(sku, enrichedForecast);
-      console.log(`✅ SKU ${sku}: Enriched with supply chain metrics`);
     });
     
     return skuLevelForecasts;
-  }, [data, committedSettings, marketAdj, stats.std, inventory, scenarios, attributes, forecastStartMonth, historicalDataEndDate]);
+  }, [enrichedData, committedSettings, marketAdj, stats.std, inventory, scenarios, attributes, forecastStartMonth, historicalDataEndDate]);
 
   // Create SKU-level tabular data for ABC and volatility analysis
   const skuLevelData = useMemo(() => {
@@ -1038,7 +1026,7 @@ const App: React.FC = () => {
           forecastMonthCount++;
         }
       });
-      console.log(`💼 Financial - SKU ${sku}: Revenue=$${skuRevenue}, Margin=$${skuMargin}`);
+      // Per-SKU financial metrics calculated
     });
 
     const avgInventoryValue = forecastMonthCount > 0 ? Math.round(totalInventoryValue / forecastMonthCount) : 0;
@@ -1166,10 +1154,22 @@ const App: React.FC = () => {
 
   const backtestResults = useMemo(() => {
     try {
+      // Filter data by category AND date range before getting unique SKUs (apply all filters)
+      const filteredForSkus = enrichedData.filter(item => {
+        const itemDate = new Date(item.date).getTime();
+        const start = new Date(committedSettings.filters.startDate).getTime();
+        const end = new Date(historicalDataEndDate).getTime();
+        const matchesDate = itemDate >= start && itemDate <= end;
+        const matchesCategory = committedSettings.filters.category === 'All' || item.category === committedSettings.filters.category;
+        return matchesDate && matchesCategory;
+      });
+
       // Get unique SKUs from filter (same as forecast)
       const uniqueSkus = committedSettings.filters.skus.length > 0 
-        ? committedSettings.filters.skus 
-        : Array.from(new Set(data.map(d => d.sku))).sort();
+        ? committedSettings.filters.skus.filter(sku => filteredForSkus.some(d => d.sku === sku))
+        : Array.from(new Set(filteredForSkus.map(d => d.sku))).sort();
+
+      // Backtest starting - category filter: "${committedSettings.filters.category}", ${uniqueSkus.length} SKUs
 
       if (uniqueSkus.length === 0 || data.length < 18) {
         return { 
@@ -1215,11 +1215,7 @@ const App: React.FC = () => {
       const testEndDate = new Date(parsedYear, parsedMonth - 1 - 1, 1, 0, 0, 0, 0); // 1 month before forecast start
       const testEndStr = testEndDate.toISOString().split('T')[0];
 
-      
-      console.log(`📊 Backtesting for SKUs: [${uniqueSkus.join(', ')}]`);
-      console.log(`📅 forecastStartMonth: ${forecastStartMonth}, Parsed as: ${forecastDate.toISOString().split('T')[0]}`);
-      console.log(`📅 Training cutoff: ${trainingCutoffStr} (aligned with forward forecast)`);
-      console.log(`📅 Test/Backtest period: ${testStartStr} to ${testEndStr} (6 months anchored on forecastStartMonth)`);
+      // Backtesting starting - verbose logging suppressed for large datasets
 
       // Per-SKU, per-method forecast data (12 months)
       const skuMethodForecasts = new Map<string, Map<string, any>>();
@@ -1239,8 +1235,16 @@ const App: React.FC = () => {
 
       // Phase 1: Calculate all 4 methods for each SKU
       uniqueSkus.forEach(sku => {
-        const skuData = data
-          .filter(d => d.sku === sku)
+        const skuData = enrichedData
+          .filter(d => {
+            const matchesSku = d.sku === sku;
+            const matchesCategory = committedSettings.filters.category === 'All' || d.category === committedSettings.filters.category;
+            const itemDate = new Date(d.date).getTime();
+            const start = new Date(committedSettings.filters.startDate).getTime();
+            const end = new Date(historicalDataEndDate).getTime();
+            const matchesDate = itemDate >= start && itemDate <= end;
+            return matchesSku && matchesCategory && matchesDate;
+          })
           .sort((a, b) => a.date.localeCompare(b.date));
 
         let hardSku = false;
@@ -1331,9 +1335,7 @@ const App: React.FC = () => {
         skuMethodForecasts.set(sku, skuMethods);
         const methodData = skuMethods.get(ForecastMethodology.HOLT_WINTERS);
         if (methodData) {
-          console.log(`✅ SKU ${sku}: Calculated 4 methodologies (13-month forecast). Dates: ${methodData.dates[0]} to ${methodData.dates[methodData.dates.length - 1]} (${methodData.dates.length} points)${hardSku ? ' [HARD: ' + hardReason + ']' : ''}`);
-        } else {
-          console.log(`✅ SKU ${sku}: Calculated 4 methodologies (13-month forecast)${hardSku ? ' [HARD: ' + hardReason + ']' : ''}`);
+          // Backtest calculated successfully
         }
       });
 
@@ -1406,7 +1408,7 @@ const App: React.FC = () => {
           // Accumulate for aggregated metrics
           aggregatedActuals.push(...methodActuals);
           aggregatedForecasts.push(...methodForecasts);
-          console.log(`  └─ ${method}: Accuracy=${accuracy.toFixed(1)}%, MAPE=${mape.toFixed(1)}%, RMSE=${rmse.toFixed(0)}, Bias=${bias.toFixed(1)}% | SKUs: ${includedSkuCount}, Data Points: ${includedDataPoints}`);
+          // Per-method metrics calculated (suppressed for large datasets)
         }
       });
 
@@ -1476,13 +1478,9 @@ const App: React.FC = () => {
       const comparisonData = Array.from(comparisonByDate.entries())
         .map(([date, {actual, forecast}]) => ({date, actual, forecast}))
         .sort((a, b) => a.date.localeCompare(b.date));
-
-      // Debug log: print monthly comparison data for export validation
-      console.log('🗓️ Monthly Comparison Data (Backtest):');
-      comparisonData.forEach(row => {
-        console.log(`  ${row.date}: Actual=${row.actual}, Forecast=${row.forecast}`);
-      });
-
+      // Debug log: print monthly comparison data summary (detailed logging suppressed for large datasets)
+      // comparisonData contains month-by-month actual vs forecast values
+      
       // Analyze for multiple dates per month
       const monthMap = new Map();
       comparisonData.forEach(row => {
@@ -1495,17 +1493,9 @@ const App: React.FC = () => {
         if (dates.length > 1) multiDateMonths.push({month, dates});
       });
       if (multiDateMonths.length > 0) {
-        console.warn('⚠️ Multiple dates per month detected in backtest comparison data:');
-        multiDateMonths.forEach(entry => {
-          console.warn(`  ${entry.month}: [${entry.dates.join(', ')}]`);
-        });
+        // Multiple dates per month detected  
       } else {
-        console.log('✅ All months have a single date in backtest comparison data.');
-      }
-
-      if (comparisonData.length > 0) {
-        console.log(`📊 Comparison data: ${comparisonData.length} dates`);
-        console.log(`   First: ${comparisonData[0].date}, Last: ${comparisonData[comparisonData.length - 1].date}`);
+        // Validation passed
       }
 
       // Phase 4: Calculate metrics for 6-month quality page window
@@ -1644,7 +1634,7 @@ const App: React.FC = () => {
         worstSkus: worstSkusGlobal
       };
     }
-  }, [data, committedSettings, hwMethod, autoDetectHW, historicalDataEndDate, marketAdj]);
+  }, [enrichedData, committedSettings, hwMethod, autoDetectHW, historicalDataEndDate, marketAdj]);
 
   const generateQualityNarrative = async () => {
     setIsQualityNarrativeLoading(true);
@@ -2038,42 +2028,36 @@ Keep it technical but accessible. Do not include targets or recommendations.`;
   };
 
   const paretoResults = useMemo(() => {
-    // Calculate Pareto based on historical volumes - use all SKUs with both historical and forecast data
+    // Calculate Pareto based on historical volumes
+    // Note: skuLevelData is already filtered by category and SKU filters in skuLevelForecasts
     const skuMap = new Map<string, number>();
     skuLevelData.forEach(item => {
-      const matchesCategory = committedSettings.filters.category === 'All' || true; // TODO: Add category field to skuLevelData if needed
-      const matchesSku = committedSettings.filters.skus.length === 0 || committedSettings.filters.skus.includes(item.sku);
-      if (matchesCategory && matchesSku) {
-        skuMap.set(item.sku, item.historicalVolume);
-      }
+      // skuLevelData already respects category and SKU filters - just use it as-is
+      skuMap.set(item.sku, item.historicalVolume);
     });
     return runParetoAnalysis(Array.from(skuMap.entries()).map(([sku, totalVolume]) => ({ sku, totalVolume })));
   }, [skuLevelData, committedSettings.filters.category, committedSettings.filters.skus]);
 
   const forecastParetoResults = useMemo(() => {
-    // Calculate Pareto based on forecasted volumes - use UNION of all SKUs from both datasets
-    const allSkus = new Set([...paretoResults.map(p => p.sku), ...skuLevelData.map(s => s.sku)]);
+    // Calculate Pareto based on forecasted volumes - use only SKUs that passed filters in skuLevelData
+    // Since skuLevelData is already filtered by category, just use those SKUs
     const skuMap = new Map<string, number>();
     
-    allSkus.forEach(sku => {
-      const matchesCategory = committedSettings.filters.category === 'All' || true;
-      const matchesSku = committedSettings.filters.skus.length === 0 || committedSettings.filters.skus.includes(sku);
-      if (matchesCategory && matchesSku) {
-        const skuData = skuLevelData.find(s => s.sku === sku);
-        skuMap.set(sku, skuData?.forecastedVolume || 0);
-      }
+    skuLevelData.forEach(item => {
+      // skuLevelData already respects category and SKU filters - just use it as-is
+      skuMap.set(item.sku, item.forecastedVolume);
     });
     return runParetoAnalysis(Array.from(skuMap.entries()).map(([sku, totalVolume]) => ({ sku, totalVolume })));
-  }, [skuLevelData, paretoResults, committedSettings.filters.category, committedSettings.filters.skus]);
+  }, [skuLevelData, committedSettings.filters.category, committedSettings.filters.skus]);
 
   const volatilityResults = useMemo(() => {
     // Calculate volatility based on last N months of historical data using SKU-level table
+    // Note: skuLevelData is already filtered by category and SKU filters in skuLevelForecasts
     const skuVolatility = new Map<string, { sku: string; volatility: number; avgQuantity: number; stdDev: number }>();
     
     skuLevelData.forEach(item => {
-      const matchesCategory = committedSettings.filters.category === 'All' || true; // TODO: Add category field to skuLevelData if needed
-      const matchesSku = committedSettings.filters.skus.length === 0 || committedSettings.filters.skus.includes(item.sku);
-      if (matchesCategory && matchesSku && item.historicalMonthly.length > 0) {
+      // skuLevelData already respects category and SKU filters - just use it as-is
+      if (item.historicalMonthly.length > 0) {
         const quantities = item.historicalMonthly;
         const avg = quantities.reduce((a, b) => a + b, 0) / quantities.length;
         const variance = quantities.reduce((sum, q) => sum + Math.pow(q - avg, 2), 0) / quantities.length;
@@ -2088,12 +2072,12 @@ Keep it technical but accessible. Do not include targets or recommendations.`;
 
   const forecastVolatilityResults = useMemo(() => {
     // Calculate volatility based on forecast data using SKU-level table
+    // Note: skuLevelData is already filtered by category and SKU filters in skuLevelForecasts
     const skuVolatility = new Map<string, { sku: string; volatility: number; avgQuantity: number; stdDev: number }>();
     
     skuLevelData.forEach(item => {
-      const matchesCategory = committedSettings.filters.category === 'All' || true; // TODO: Add category field to skuLevelData if needed
-      const matchesSku = committedSettings.filters.skus.length === 0 || committedSettings.filters.skus.includes(item.sku);
-      if (matchesCategory && matchesSku && item.forecastedMonthly.length > 0) {
+      // skuLevelData already respects category and SKU filters - just use it as-is
+      if (item.forecastedMonthly.length > 0) {
         const quantities = item.forecastedMonthly;
         const avg = quantities.reduce((a, b) => a + b, 0) / quantities.length;
         const variance = quantities.reduce((sum, q) => sum + Math.pow(q - avg, 2), 0) / quantities.length;
@@ -2319,8 +2303,8 @@ Always cite specific SKU IDs when making recommendations.`;
   const clearSkus = () => setFilters(f => ({ ...f, skus: [] }));
 
   return (
-    <div className="h-screen flex flex-col lg:flex-row items-stretch bg-slate-950 font-sans text-slate-100 overflow-hidden">
-      <aside className="w-full lg:w-80 bg-slate-900 border-r border-slate-800 p-5 flex flex-col gap-4 overflow-y-auto z-30 shadow-2xl shrink-0">
+    <div className="h-screen flex flex-col lg:flex-row items-stretch bg-black font-sans text-slate-100 overflow-hidden">
+      <aside className="w-full lg:w-80 bg-black border-r border-slate-800 p-5 flex flex-col gap-4 overflow-y-auto z-30 shadow-2xl shrink-0">
         <div className="mb-2">
           {/* Refined SSA & Company Brand Logo with Serif Font */}
           <svg viewBox="0 0 350 50" className="w-full h-auto text-white" xmlns="http://www.w3.org/2000/svg">
@@ -2334,14 +2318,14 @@ Always cite specific SKU IDs when making recommendations.`;
             <text x="48" y="36" fontFamily="'Times New Roman', Times, serif" fontWeight="600" fontSize="26" fill="currentColor" letterSpacing="0.02em">SSA & COMPANY</text>
           </svg>
           <div className="flex items-center gap-2 mt-2 text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">
-            <Zap size={10} className="text-indigo-400" /> Advanced Forecasting Engine
+            <Zap size={10} className="text-blue-400" /> Advanced Forecasting Engine
           </div>
         </div>
 
         <section className="space-y-2">
           <div className="flex justify-between items-center">
             <h3 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"><Database size={10}/> Data Console</h3>
-            <button onClick={() => setIsSchemaModalOpen(true)} className="text-[8px] font-black uppercase text-indigo-400 hover:underline">Schema Guide</button>
+            <button onClick={() => setIsSchemaModalOpen(true)} className="text-[8px] font-black uppercase text-blue-400 hover:underline">Schema Guide</button>
           </div>
           {uploadError && (
             <div className="p-3 bg-red-950 border border-red-700 rounded-lg text-[8px] text-red-200 flex items-start gap-2">
@@ -2359,19 +2343,19 @@ Always cite specific SKU IDs when making recommendations.`;
             <button onClick={() => histUploadRef.current?.click()} disabled={data.some(d => d.type === 'hist')} className={`p-2 rounded-lg flex flex-col items-center gap-1 group transition-all ${
               data.some(d => d.type === 'hist') 
                 ? 'bg-slate-800 border border-slate-700 text-slate-500 cursor-not-allowed' 
-                : 'bg-slate-950 border border-slate-800 text-slate-400 hover:border-indigo-500'
+                : 'bg-black border border-slate-800 text-slate-400 hover:border-blue-600'
             }`}>
               {data.some(d => d.type === 'hist') ? (
-                <Check size={12} className="text-indigo-400"/>
+                <Check size={12} className="text-blue-400"/>
               ) : (
-                <FileText size={12} className="text-indigo-400 group-hover:scale-110 transition-transform"/>
+                <FileText size={12} className="text-blue-400 group-hover:scale-110 transition-transform"/>
               )}
               <span className="text-[7px] font-black uppercase">Sales</span>
             </button>
             <button onClick={() => attrUploadRef.current?.click()} disabled={hasUserUploadedData.attr} className={`p-2 rounded-lg flex flex-col items-center gap-1 group transition-all ${
               hasUserUploadedData.attr
                 ? 'bg-slate-800 border border-slate-700 text-slate-500 cursor-not-allowed' 
-                : 'bg-slate-950 border border-slate-800 text-slate-400 hover:border-emerald-500'
+                : 'bg-black border border-slate-800 text-slate-400 hover:border-emerald-500'
             }`}>
               {hasUserUploadedData.attr ? (
                 <Check size={12} className="text-emerald-400"/>
@@ -2383,7 +2367,7 @@ Always cite specific SKU IDs when making recommendations.`;
             <button onClick={() => invUploadRef.current?.click()} disabled={hasUserUploadedData.inv} className={`p-2 rounded-lg flex flex-col items-center gap-1 group transition-all ${
               hasUserUploadedData.inv
                 ? 'bg-slate-800 border border-slate-700 text-slate-500 cursor-not-allowed' 
-                : 'bg-slate-950 border border-slate-800 text-slate-400 hover:border-orange-500'
+                : 'bg-black border border-slate-800 text-slate-400 hover:border-orange-500'
             }`}>
               {hasUserUploadedData.inv ? (
                 <Check size={12} className="text-orange-400"/>
@@ -2395,7 +2379,7 @@ Always cite specific SKU IDs when making recommendations.`;
             <button onClick={() => prodUploadRef.current?.click()} disabled={committedSettings.filters.productionPlans.length > 0} className={`p-2 rounded-lg flex flex-col items-center gap-1 group transition-all ${
               committedSettings.filters.productionPlans.length > 0 
                 ? 'bg-slate-800 border border-slate-700 text-slate-500 cursor-not-allowed' 
-                : 'bg-slate-950 border border-slate-800 text-slate-400 hover:border-cyan-500'
+                : 'bg-black border border-slate-800 text-slate-400 hover:border-cyan-500'
             }`}>
               {committedSettings.filters.productionPlans.length > 0 ? (
                 <Check size={12} className="text-cyan-400"/>
@@ -2415,7 +2399,7 @@ Always cite specific SKU IDs when making recommendations.`;
         <section className="space-y-2 pt-2 border-t border-slate-800">
           <h3 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"><Cpu size={10}/> AI Orchestrator</h3>
           <div className="space-y-2">
-            <select className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-[10px] font-bold text-slate-200 outline-none hover:border-indigo-500 transition-all" value={filters.aiProvider} onChange={e => setFilters(f => ({...f, aiProvider: e.target.value as AiProvider}))}>
+            <select className="w-full p-2 bg-black border border-slate-800 rounded-lg text-[10px] font-bold text-slate-200 outline-none hover:border-blue-600 transition-all" value={filters.aiProvider} onChange={e => setFilters(f => ({...f, aiProvider: e.target.value as AiProvider}))}>
               {Object.entries(AiProvider)
                 .filter(([key]) => key !== 'GEMINI')
                 .map(([key, value]) => (
@@ -2424,17 +2408,17 @@ Always cite specific SKU IDs when making recommendations.`;
             </select>
             <div className="space-y-1.5">
               <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">Audience Profile</label>
-              <select className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-[10px] font-bold text-slate-200 outline-none hover:border-emerald-500 transition-all" value={draftAudience} onChange={e => setDraftAudience(e.target.value as AudienceType)}>
+              <select className="w-full p-2 bg-black border border-slate-800 rounded-lg text-[10px] font-bold text-slate-200 outline-none hover:border-emerald-500 transition-all" value={draftAudience} onChange={e => setDraftAudience(e.target.value as AudienceType)}>
                 {Object.entries(AudienceType).map(([key, value]) => (
                   <option key={key} value={value}>{value}</option>
                 ))}
               </select>
               <p className="text-[7px] text-slate-600 font-medium italic">Insights tailored to your role</p>
             </div>
-            <textarea className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-[10px] text-slate-400 font-medium outline-none resize-none h-16 focus:border-indigo-500" placeholder="Industry context..." value={draftIndustryPrompt} onChange={e => setDraftIndustryPrompt(e.target.value)} />
-            <div className="flex items-center justify-between p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+            <textarea className="w-full p-2 bg-black border border-slate-800 rounded-lg text-[10px] text-slate-400 font-medium outline-none resize-none h-16 focus:border-blue-600" placeholder="Industry context..." value={draftIndustryPrompt} onChange={e => setDraftIndustryPrompt(e.target.value)} />
+            <div className="flex items-center justify-between p-2.5 bg-black rounded-xl border border-slate-800">
               <div className="flex flex-col"><span className="text-[8px] font-black text-slate-500 uppercase">Market Search</span><span className="text-[7px] text-slate-600 font-bold uppercase tracking-tighter">Live Web Grounding</span></div>
-              <button onClick={() => setFilters(f => ({...f, includeExternalTrends: !f.includeExternalTrends}))} className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${filters.includeExternalTrends ? 'bg-indigo-600' : 'bg-slate-800'}`}>
+              <button onClick={() => setFilters(f => ({...f, includeExternalTrends: !f.includeExternalTrends}))} className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${filters.includeExternalTrends ? 'bg-blue-700' : 'bg-slate-800'}`}>
                 <span className={`pointer-events-none block h-3.5 w-3.5 rounded-full bg-white transition-transform ${filters.includeExternalTrends ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
               </button>
             </div>
@@ -2443,9 +2427,9 @@ Always cite specific SKU IDs when making recommendations.`;
 
         <section className="space-y-2 pt-2 border-t border-slate-800">
           <h3 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"><Calendar size={10}/> Forecast Scope</h3>
-          <div className="space-y-2.5 p-3 bg-slate-950 rounded-xl border border-slate-800">
-            <div className="flex justify-between text-[8px] font-black text-slate-500 uppercase tracking-widest"><span>Horizon</span><span className="text-indigo-400">{draftHorizon}M</span></div>
-            <input type="range" min="1" max="24" className="w-full accent-indigo-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer" value={draftHorizon} onChange={e => setDraftHorizon(Number(e.target.value))} />
+          <div className="space-y-2.5 p-3 bg-black rounded-xl border border-slate-800">
+            <div className="flex justify-between text-[8px] font-black text-slate-500 uppercase tracking-widest"><span>Horizon</span><span className="text-blue-400">{draftHorizon}M</span></div>
+            <input type="range" min="1" max="24" className="w-full accent-blue-600 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer" value={draftHorizon} onChange={e => setDraftHorizon(Number(e.target.value))} />
             
             <div className="flex justify-between text-[8px] font-black text-slate-500 uppercase tracking-widest"><span>Confidence</span><span className="text-emerald-400">{filters.confidenceLevel}%</span></div>
             <input type="range" min="80" max="99" step="5" className="w-full accent-emerald-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer" value={filters.confidenceLevel} onChange={e => setFilters(f => ({...f, confidenceLevel: Number(e.target.value)}))} />
@@ -2458,8 +2442,8 @@ Always cite specific SKU IDs when making recommendations.`;
                   content={
                     <div className="space-y-4">
                       {Object.entries(METHOD_DESCRIPTIONS).map(([k,v]) => (
-                        <div key={k} className="p-2 rounded-xl bg-slate-950/50 border border-slate-800/50 hover:border-indigo-500/30 transition-all">
-                          <p className="font-black text-indigo-400 uppercase text-[9px] mb-1">{k.split(' (')[0]}</p>
+                        <div key={k} className="p-2 rounded-xl bg-black/50 border border-slate-800/50 hover:border-blue-600/30 transition-all">
+                          <p className="font-black text-blue-400 uppercase text-[9px] mb-1">{k.split(' (')[0]}</p>
                           <p className="text-[9px] text-slate-400 leading-relaxed font-medium">{v}</p>
                         </div>
                       ))}
@@ -2467,7 +2451,7 @@ Always cite specific SKU IDs when making recommendations.`;
                   } 
                 />
               </div>
-              <select className="w-full p-1.5 bg-slate-900 border border-slate-800 rounded text-[10px] font-bold text-slate-200 outline-none" value={filters.methodology} onChange={e => setFilters(f => ({...f, methodology: e.target.value as ForecastMethodology}))}>
+              <select className="w-full p-1.5 bg-black border border-slate-800 rounded text-[10px] font-bold text-slate-200 outline-none" value={filters.methodology} onChange={e => setFilters(f => ({...f, methodology: e.target.value as ForecastMethodology}))}>
                 {Object.values(ForecastMethodology).map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
@@ -2479,7 +2463,7 @@ Always cite specific SKU IDs when making recommendations.`;
                   <button
                     onClick={() => setAutoDetectHW(!autoDetectHW)}
                     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                      autoDetectHW ? 'bg-indigo-600' : 'bg-slate-700'
+                      autoDetectHW ? 'bg-blue-700' : 'bg-slate-700'
                     }`}
                   >
                     <span
@@ -2498,7 +2482,7 @@ Always cite specific SKU IDs when making recommendations.`;
                 {!autoDetectHW && (
                   <>
                     <label className="text-[10px] font-bold text-slate-300 block mt-2">Manual Override</label>
-                    <select className="w-full p-1.5 bg-slate-900 border border-slate-800 rounded text-[10px] font-bold text-slate-200 outline-none" value={hwMethod} onChange={e => setHwMethod(e.target.value as 'additive' | 'multiplicative')}>
+                    <select className="w-full p-1.5 bg-black border border-slate-800 rounded text-[10px] font-bold text-slate-200 outline-none" value={hwMethod} onChange={e => setHwMethod(e.target.value as 'additive' | 'multiplicative')}>
                       <option value="multiplicative">Multiplicative (Steady-State Products)</option>
                       <option value="additive">Additive (Growth/Sparse Products)</option>
                     </select>
@@ -2516,37 +2500,37 @@ Always cite specific SKU IDs when making recommendations.`;
 
         <section className="space-y-2 pt-2 border-t border-slate-800">
           <h3 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"><ShieldAlert size={10}/> Resiliency Simulator</h3>
-          <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 space-y-3">
+          <div className="p-2.5 bg-black rounded-xl border border-slate-800 space-y-3">
              <div className="flex justify-between items-center">
                 <span className="text-[8px] font-black text-slate-500 uppercase">Supplier Volatility</span>
-                <span className={`text-[10px] font-black ${filters.supplierVolatility > 0.5 ? 'text-orange-400' : 'text-indigo-400'}`}>+{(filters.supplierVolatility * 100).toFixed(0)}%</span>
+                <span className={`text-[10px] font-black ${filters.supplierVolatility > 0.5 ? 'text-orange-400' : 'text-blue-400'}`}>+{(filters.supplierVolatility * 100).toFixed(0)}%</span>
              </div>
-             <input type="range" min="0" max="1" step="0.05" className="w-full accent-indigo-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer" value={filters.supplierVolatility} onChange={e => setFilters(f => ({...f, supplierVolatility: Number(e.target.value)}))} />
+             <input type="range" min="0" max="1" step="0.05" className="w-full accent-blue-600 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer" value={filters.supplierVolatility} onChange={e => setFilters(f => ({...f, supplierVolatility: Number(e.target.value)}))} />
           </div>
         </section>
 
         <section className="space-y-2 pt-2 border-t border-slate-800">
           <h3 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"><Sparkles size={10}/> Market Disruptions</h3>
-          <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 space-y-3">
+          <div className="p-2.5 bg-black rounded-xl border border-slate-800 space-y-3">
             <div className="space-y-2">
               <label className="text-[8px] font-black text-slate-500 uppercase block">Month</label>
-              <input type="month" className="w-full p-1.5 bg-slate-900 border border-slate-800 rounded text-[10px] text-slate-200 outline-none" value={draftShockMonth} onChange={e => setDraftShockMonth(e.target.value)} />
+              <input type="month" className="w-full p-1.5 bg-black border border-slate-800 rounded text-[10px] text-slate-200 outline-none" value={draftShockMonth} onChange={e => setDraftShockMonth(e.target.value)} />
             </div>
             <div className="space-y-2">
               <label className="text-[8px] font-black text-slate-500 uppercase block">Description</label>
-              <input type="text" placeholder="e.g., Holiday Promotion" className="w-full p-1.5 bg-slate-900 border border-slate-800 rounded text-[10px] text-slate-200 placeholder-slate-600 outline-none" value={draftShockDescription} onChange={e => setDraftShockDescription(e.target.value)} />
+              <input type="text" placeholder="e.g., Holiday Promotion" className="w-full p-1.5 bg-black border border-slate-800 rounded text-[10px] text-slate-200 placeholder-slate-600 outline-none" value={draftShockDescription} onChange={e => setDraftShockDescription(e.target.value)} />
             </div>
             <div className="space-y-2">
               <label className="text-[8px] font-black text-slate-500 uppercase block">% Change ({draftShockPercentage > 0 ? '+' : ''}{draftShockPercentage}%)</label>
-              <input type="number" min="-75" max="100" className="w-full p-1.5 bg-slate-900 border border-slate-800 rounded text-[10px] text-slate-200 outline-none" value={draftShockPercentage} onChange={e => setDraftShockPercentage(Number(e.target.value))} />
+              <input type="number" min="-75" max="100" className="w-full p-1.5 bg-black border border-slate-800 rounded text-[10px] text-slate-200 outline-none" value={draftShockPercentage} onChange={e => setDraftShockPercentage(Number(e.target.value))} />
               <span className="text-[8px] text-slate-500">Range: -75% to +100%</span>
             </div>
-            <button onClick={handleAddShock} disabled={!draftShockMonth || !draftShockDescription || draftShockPercentage === 0 || draftShockPercentage < -75 || draftShockPercentage > 100} className="w-full py-2 px-3 bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:bg-indigo-600/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"><Plus size={12}/> Add Shock</button>
+            <button onClick={handleAddShock} disabled={!draftShockMonth || !draftShockDescription || draftShockPercentage === 0 || draftShockPercentage < -75 || draftShockPercentage > 100} className="w-full py-2 px-3 bg-blue-700/20 border border-blue-400/30 text-blue-400 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"><Plus size={12}/> Add Shock</button>
             
             {filters.shocks.length > 0 && (
               <div className="border-t border-slate-800 pt-3 space-y-2 max-h-32 overflow-y-auto">
                 {filters.shocks.map(shock => (
-                  <div key={shock.id} className="p-2 bg-slate-900 rounded border border-slate-700 flex justify-between items-center group hover:border-slate-600 transition-all">
+                  <div key={shock.id} className="p-2 bg-black rounded border border-slate-700 flex justify-between items-center group hover:border-slate-600 transition-all">
                     <div className="flex-1 min-w-0">
                       <p className="text-[9px] font-bold text-slate-300 truncate">{shock.month} • {shock.description}</p>
                       <p className={`text-[8px] font-black ${shock.percentageChange > 0 ? 'text-green-400' : 'text-red-400'}`}>{shock.percentageChange > 0 ? '+' : ''}{shock.percentageChange}%</p>
@@ -2573,7 +2557,7 @@ Always cite specific SKU IDs when making recommendations.`;
                 const forecastDate = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-01`;
                 setForecastStartMonth(forecastDate);
               }}
-              className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-[10px] font-bold text-slate-100 outline-none focus:border-emerald-500 transition-all"
+              className="w-full p-2.5 bg-black border border-slate-800 rounded-lg text-[10px] font-bold text-slate-100 outline-none focus:border-emerald-500 transition-all"
             />
             <p className="text-[7px] text-slate-600 font-medium italic">Last date to include in historical analysis</p>
           </div>
@@ -2583,18 +2567,18 @@ Always cite specific SKU IDs when making recommendations.`;
               type="date" 
               value={forecastStartMonth}
               onChange={(e) => setForecastStartMonth(e.target.value)}
-              className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-[10px] font-bold text-slate-100 outline-none focus:border-indigo-500 transition-all"
+              className="w-full p-2.5 bg-black border border-slate-800 rounded-lg text-[10px] font-bold text-slate-100 outline-none focus:border-blue-600 transition-all"
             />
             <p className="text-[7px] text-slate-600 font-medium italic">Start date for forecast period</p>
           </div>
-          <button onClick={handleRunAnalysis} disabled={isLoading} className={`w-full py-3.5 rounded-2xl flex items-center justify-center gap-3 transition-all ${isLoading ? 'bg-slate-800 text-slate-500' : 'bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-indigo-600/10'}`}>
+          <button onClick={handleRunAnalysis} disabled={isLoading} className={`w-full py-3.5 rounded-2xl flex items-center justify-center gap-3 transition-all ${isLoading ? 'bg-slate-800 text-slate-500' : 'text-white font-black text-[11px] uppercase tracking-widest shadow-2xl'}`} style={!isLoading ? { backgroundColor: 'var(--ssa-blue)', boxShadow: '0 16px 24px rgba(0, 51, 153, 0.2)' } : undefined}>
             {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} fill="currentColor" />} {isLoading ? "Syncing..." : "Run Analysis"}
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 bg-slate-950 relative">
-        <section className="bg-slate-900/50 backdrop-blur-md border border-slate-800 p-6 rounded-[2.5rem] grid grid-cols-1 lg:grid-cols-2 gap-8 shadow-2xl animate-in fade-in duration-500 relative z-40">
+      <main className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 bg-black relative">
+        <section className="bg-black/50 backdrop-blur-md border border-slate-800 p-6 rounded-[2.5rem] grid grid-cols-1 lg:grid-cols-2 gap-8 shadow-2xl animate-in fade-in duration-500 relative z-40">
           <div className="w-full">
             <MultiSearchableSelect 
               options={availableSKUs}
@@ -2603,7 +2587,7 @@ Always cite specific SKU IDs when making recommendations.`;
               onSelectAll={selectAllSkus}
               onClear={clearSkus}
               label="Entity Selector (SKU)"
-              icon={<Filter size={12} className="text-indigo-400" />}
+              icon={<Filter size={12} className="text-blue-400" />}
             />
           </div>
 
@@ -2611,7 +2595,9 @@ Always cite specific SKU IDs when making recommendations.`;
             <SearchableSelect 
               options={availableCategories}
               value={filters.category}
-              onChange={(val) => setFilters(f => ({ ...f, category: val }))}
+              onChange={(val) => {
+                setFilters(f => ({ ...f, category: val }));
+              }}
               placeholder="All Categories"
               label="Category Search"
               icon={<Search size={12} className="text-emerald-400" />}
@@ -2624,9 +2610,10 @@ Always cite specific SKU IDs when making recommendations.`;
               disabled={!filtersHaveChanged}
               className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
                 filtersHaveChanged
-                  ? 'bg-indigo-600 border border-indigo-500 text-white hover:bg-indigo-700 shadow-lg'
+                  ? 'border text-white shadow-lg'
                   : 'bg-slate-800 border border-slate-700 text-slate-500 cursor-not-allowed opacity-50'
               }`}
+              style={filtersHaveChanged ? { backgroundColor: 'var(--ssa-blue)', borderColor: 'var(--ssa-blue)' } : undefined}
             >
               <Check size={14} /> Apply Filters
             </button>
@@ -2636,48 +2623,48 @@ Always cite specific SKU IDs when making recommendations.`;
           </div>
         </section>
 
-        <header className="bg-slate-900 p-4 rounded-3xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
-          <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800">
+        <header className="bg-black p-4 rounded-3xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+          <div className="flex bg-black p-1 rounded-2xl border border-slate-800">
             {['future', 'inventory', 'financials', 'quality', 'sku-analysis'].map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab as any)} className={`px-4 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === tab ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>
+              <button key={tab} onClick={() => setActiveTab(tab as any)} className={`px-4 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === tab ? 'text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`} style={activeTab === tab ? { backgroundColor: 'var(--ssa-blue)' } : undefined}>
                 {tab === 'sku-analysis' ? 'SKU Analysis' : tab}
               </button>
             ))}
           </div>
           <div className="flex gap-2">
             <button onClick={handleExport} disabled={!committedSettings.triggerToken} className="px-5 py-2 bg-slate-800 border border-slate-700 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-slate-700 transition-all disabled:opacity-50"><Download size={14}/> Export CSV</button>
-            <button onClick={handleGenerateReport} disabled={!committedSettings.triggerToken} className="px-5 py-2 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-600/20 transition-all disabled:opacity-50"><FileOutput size={14}/> Generate Brief</button>
+            <button onClick={handleGenerateReport} disabled={!committedSettings.triggerToken} className="px-5 py-2 border rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all disabled:opacity-50" style={{ backgroundColor: 'var(--ssa-blue)', color: 'var(--ssa-white)', borderColor: 'var(--ssa-blue)' }}><FileOutput size={14}/> Generate Brief</button>
           </div>
         </header>
 
         {!committedSettings.triggerToken ? (
-          <div className="flex flex-col items-center justify-center py-32 bg-slate-900/50 border-2 border-slate-800 border-dashed rounded-[3rem]">
-            <div className="p-5 bg-indigo-500/10 rounded-full mb-6 border border-indigo-500/20 animate-pulse"><Cpu className="text-indigo-400" size={40}/></div>
+          <div className="flex flex-col items-center justify-center py-32 bg-black/50 border-2 border-slate-800 border-dashed rounded-[3rem]">
+            <div className="p-5 bg-blue-400/10 rounded-full mb-6 border border-blue-400/20 animate-pulse"><Cpu className="text-blue-400" size={40}/></div>
             <h2 className="text-xl font-black text-white uppercase tracking-tight mb-2">Engine Inactive</h2>
-            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Select your entities and click <span className="text-indigo-400">'Run Analysis'</span> to calculate projections.</p>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Select your entities and click <span className="text-blue-400">'Run Analysis'</span> to calculate projections.</p>
           </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-6">
             {activeTab === 'future' && (
               <div className="space-y-6">
                 <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2.5rem] shadow-2xl min-h-[160px] flex flex-col relative overflow-hidden">
-                    <div className="flex items-center gap-3 mb-4 shrink-0"><div className="p-2.5 bg-indigo-500/10 rounded-xl border border-indigo-500/20"><BrainCircuit size={18} className="text-indigo-400" /></div><h3 className="text-sm font-black text-white uppercase tracking-widest">Strategic Intelligence</h3></div>
+                  <div className="bg-black border border-slate-800 p-6 rounded-[2.5rem] shadow-2xl min-h-[160px] flex flex-col relative overflow-hidden">
+                    <div className="flex items-center gap-3 mb-4 shrink-0"><div className="p-2.5 bg-blue-400/10 rounded-xl border border-blue-400/20"><BrainCircuit size={18} className="text-blue-400" /></div><h3 className="text-sm font-black text-white uppercase tracking-widest">Strategic Intelligence</h3></div>
                     <div className="text-slate-300 text-[11px] leading-relaxed font-medium overflow-y-auto pr-2 flex-1">{isLoading ? "Analyzing factors..." : aiInsight}</div>
                   </div>
-                  <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2.5rem] shadow-2xl min-h-[160px] flex flex-col">
+                  <div className="bg-black border border-slate-800 p-6 rounded-[2.5rem] shadow-2xl min-h-[160px] flex flex-col">
                     <div className="flex items-center gap-3 mb-4 shrink-0"><div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20"><MessageSquare size={18} className="text-emerald-400" /></div><h3 className="text-sm font-black text-white uppercase tracking-widest">Operational Narrative</h3></div>
                     <div className="text-slate-300 text-[11px] leading-relaxed font-medium italic overflow-y-auto pr-2 flex-1">{isLoading ? "Writing outlook..." : narrativeText}</div>
                   </div>
                 </section>
 
-                <section className="bg-slate-900 p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl relative">
+                <section className="bg-black p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl relative">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                     <h2 className="text-lg font-black text-white uppercase tracking-tighter">Consolidated Demand Trend</h2>
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-3 px-4 py-1.5 bg-indigo-600/10 border border-indigo-500/20 rounded-full">
-                        <Zap size={12} className="text-indigo-400" />
-                        <span className="text-[9px] font-black uppercase text-indigo-400 tracking-widest">Model: {committedSettings.filters.methodology.split(' (')[0]}</span>
+                      <div className="flex items-center gap-3 px-4 py-1.5 bg-blue-700/10 border border-blue-400/20 rounded-full">
+                        <Zap size={12} className="text-blue-400" />
+                        <span className="text-[9px] font-black uppercase text-blue-400 tracking-widest">Model: {committedSettings.filters.methodology.split(' (')[0]}</span>
                       </div>
                       <button onClick={() => setChartZoom({ startIndex: 0, endIndex: Math.max(40, aggregatedForecast.length - 1) })} className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-slate-400 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-slate-700 hover:text-slate-300 transition-all">Reset Zoom</button>
                     </div>
@@ -2725,7 +2712,7 @@ Always cite specific SKU IDs when making recommendations.`;
                   </div>
                 </section>
 
-                <section className="bg-slate-900 p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl">
+                <section className="bg-black p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl">
                   <div className="flex items-center gap-2 mb-4">
                     <Sparkles size={16} className="text-amber-400" />
                     <h3 className="text-sm font-black text-white uppercase tracking-widest">Sticky Notes</h3>
@@ -2734,11 +2721,11 @@ Always cite specific SKU IDs when making recommendations.`;
                     <div className="lg:col-span-2 space-y-3">
                       <div className="space-y-2">
                         <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">Date</label>
-                        <input type="date" className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-[10px] text-slate-200 outline-none focus:border-amber-500 transition-all" value={draftNoteDate} onChange={e => setDraftNoteDate(e.target.value)} />
+                        <input type="date" className="w-full p-2 bg-black border border-slate-800 rounded-lg text-[10px] text-slate-200 outline-none focus:border-amber-500 transition-all" value={draftNoteDate} onChange={e => setDraftNoteDate(e.target.value)} />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">Note</label>
-                        <textarea className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-[10px] text-slate-200 placeholder-slate-600 outline-none resize-none h-20 focus:border-amber-500 transition-all" placeholder="Add your annotation..." value={draftNoteContent} onChange={e => setDraftNoteContent(e.target.value)} />
+                        <textarea className="w-full p-2 bg-black border border-slate-800 rounded-lg text-[10px] text-slate-200 placeholder-slate-600 outline-none resize-none h-20 focus:border-amber-500 transition-all" placeholder="Add your annotation..." value={draftNoteContent} onChange={e => setDraftNoteContent(e.target.value)} />
                       </div>
                       <button onClick={handleAddNote} disabled={!draftNoteDate || !draftNoteContent.trim()} className="w-full py-2 px-3 bg-amber-600/20 border border-amber-500/30 text-amber-400 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:bg-amber-600/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"><Plus size={12}/> Add Note</button>
                     </div>
@@ -2747,7 +2734,7 @@ Always cite specific SKU IDs when making recommendations.`;
                         <p className="text-[8px] text-slate-600 italic text-center py-4">No notes yet</p>
                       ) : (
                         filters.stickyNotes.map(note => (
-                          <div key={note.id} className="p-3 bg-slate-950 rounded border border-slate-700 group hover:border-amber-500/30 transition-all">
+                          <div key={note.id} className="p-3 bg-black rounded border border-slate-700 group hover:border-amber-500/30 transition-all">
                             <div className="flex justify-between items-start gap-2 mb-1">
                               <p className="text-[9px] font-bold text-amber-400">{note.date}</p>
                               <button onClick={() => handleDeleteNote(note.id)} className="text-slate-600 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100"><Trash2 size={12}/></button>
@@ -2770,7 +2757,7 @@ Always cite specific SKU IDs when making recommendations.`;
                   <MetricsCard label="Inventory Value" value={formatCurrency(financialStats.avgInventoryValue)} description="Working capital tied in stock" />
                   <MetricsCard label="Profit at Risk" value={formatCurrency(financialStats.valueAtRisk)} description="Estimated stockout liability" trend="down" />
                 </section>
-                <section className="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
+                <section className="bg-black p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
                   <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6">Financial Growth Projection ($ Nearest Dollar)</h3>
                   <div className="h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -2794,7 +2781,7 @@ Always cite specific SKU IDs when making recommendations.`;
                             if (active && payload && payload.length) {
                               const data = payload[0].payload;
                               return (
-                                <div className="bg-slate-950 border border-slate-700 rounded-lg p-3 shadow-xl">
+                                <div className="bg-black border border-slate-700 rounded-lg p-3 shadow-xl">
                                   <p className="text-white text-[10px] font-bold mb-2">{formatDateForDisplay(data.date)}</p>
                                   <p className="text-amber-300 text-[9px] font-bold">Revenue: {formatCurrency(data.revenue)}</p>
                                   <p className="text-red-400 text-[9px] font-semibold">COGS: {formatCurrency(data.cogs)}</p>
@@ -2884,9 +2871,9 @@ Always cite specific SKU IDs when making recommendations.`;
             {activeTab === 'quality' && (
               <div className="space-y-6 animate-in fade-in duration-500">
                 {/* AI-Generated Quality Narrative */}
-                <section className="bg-gradient-to-br from-indigo-600/10 to-purple-600/10 border border-indigo-500/30 rounded-2xl p-8 shadow-lg">
+                <section className="bg-black border border-blue-400/30 rounded-2xl p-8 shadow-lg">
                   <div className="mb-4">
-                    <h2 className="text-sm font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <h2 className="text-sm font-black uppercase tracking-widest mb-2 flex items-center gap-2" style={{ color: 'var(--ssa-curious-blue)' }}>
                       <Sparkles size={16} /> Methodology Assessment
                     </h2>
                     <p className="text-xs text-slate-400">AI-powered analysis of {committedSettings.filters.methodology.split(' (')[0]} performance vs competing methods</p>
@@ -2909,7 +2896,7 @@ Always cite specific SKU IDs when making recommendations.`;
                 </section>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  <section className="lg:col-span-8 bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
+                  <section className="lg:col-span-8 bg-black p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
                     <div className="flex justify-between items-center mb-6">
                       <h3 className="text-sm font-black text-white uppercase tracking-widest">Backtest Performance</h3>
                       <button onClick={() => setBacktestChartZoom({ startIndex: 0, endIndex: Math.max(0, (getQualityPageData(backtestResults.comparisonData || [], forecastStartMonth)?.length || 1) - 1) })} className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-slate-400 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-slate-700 hover:text-slate-300 transition-all">Reset Zoom</button>
@@ -2951,7 +2938,7 @@ Always cite specific SKU IDs when making recommendations.`;
                               const {actual, forecast} = payload;
                               const accuracy = actual && forecast ? Math.max(0, Math.min(100, (1 - Math.abs(actual - forecast) / Math.max(actual, 1)) * 100)) : 0;
                               return (
-                                <div className="bg-slate-950 border border-slate-700 p-3 rounded-lg text-xs space-y-1">
+                                <div className="bg-black border border-slate-700 p-3 rounded-lg text-xs space-y-1">
                                   <p className="text-white font-bold mb-2">{formatDateForDisplay(payload.date)}</p>
                                   <p className="text-slate-400">Actuals: <span className="text-blue-400 font-bold">{formatNumber(actual || 0)}</span></p>
                                   <p className="text-slate-400">Forecast ({committedSettings.filters.methodology.split(' (')[0]}): <span className="text-red-400 font-bold">{formatNumber(forecast || 0)}</span></p>
@@ -2970,38 +2957,38 @@ Always cite specific SKU IDs when making recommendations.`;
 
                   <section className="lg:col-span-4 flex flex-col gap-6">
                     {backtestResults.testWindow?.startDate && (
-                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-700">
+                      <div className="bg-black p-4 rounded-xl border border-slate-700">
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Backtest Window</p>
                         <p className="text-[10px] text-slate-300">{backtestResults.testWindow.startDate} to {backtestResults.testWindow.endDate}</p>
                         <p className="text-[8px] text-slate-500 mt-1">6-month holdout period (1-month buffer excluded)</p>
                       </div>
                     )}
-                    <div className="bg-slate-900 p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl flex-1">
+                    <div className="bg-black p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl flex-1">
                        <h3 className="text-[10px] font-black text-white uppercase tracking-widest mb-4">Methodology Benchmark</h3>
                        <div className="space-y-3">
                          {Array.from(backtestResults.qualityPageMethodMetrics?.entries() || backtestResults.methodMetrics.entries())
                            .sort((a, b) => (b[1].accuracy || 0) - (a[1].accuracy || 0))
                            .map(([method, metrics]) => (
-                           <div key={method} className={`p-3 rounded-xl border ${method === committedSettings.filters.methodology ? 'bg-indigo-600/10 border-indigo-500/30' : 'bg-slate-950 border-slate-800'}`}>
+                           <div key={method} className={`p-3 rounded-xl border ${method === committedSettings.filters.methodology ? 'bg-blue-700/10 border-blue-400/30' : 'bg-black border-slate-800'}`}>
                              <div className="flex justify-between items-center mb-1">
                                <span className="text-[9px] font-black uppercase text-slate-300">{method.split(' (')[0]}</span>
-                               <span className="text-[10px] font-black text-indigo-400">{metrics.accuracy?.toFixed(1) || 'N/A'}%</span>
+                               <span className="text-[10px] font-black text-blue-400">{metrics.accuracy?.toFixed(1) || 'N/A'}%</span>
                              </div>
                              <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-                               <div className="bg-indigo-500 h-full" style={{width: `${metrics.accuracy || 0}%`}} />
+                               <div className="bg-blue-600 h-full" style={{width: `${metrics.accuracy || 0}%`}} />
                              </div>
                            </div>
                          ))}
                        </div>
                     </div>
-                    <button onClick={runRca} disabled={isRcaLoading} className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-indigo-600/10 transition-all disabled:opacity-50">
+                    <button onClick={runRca} disabled={isRcaLoading} className="w-full py-4 bg-blue-700 hover:bg-blue-800 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-blue-600/10 transition-all disabled:opacity-50">
                       {isRcaLoading ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />} Run Anomaly RCA
                     </button>
                   </section>
                 </div>
 
                 {/* Highest Error SKUs - moved after backtest performance */}
-                <section className="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
+                <section className="bg-black p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-sm font-black text-white uppercase tracking-widest">Highest Error SKUs (Bottom 10)</h3>
                     <div className="flex items-center gap-3">
@@ -3024,7 +3011,7 @@ Always cite specific SKU IDs when making recommendations.`;
                       <tbody>
                         {backtestResults.worstSkus.map((sku, idx) => (
                           <tr key={sku.sku} className={`border-b border-slate-800 hover:bg-slate-800/50 transition-colors ${idx < 3 ? 'bg-red-500/5' : ''}`}>
-                            <td className="py-3 px-4 font-black text-indigo-400">{sku.sku}</td>
+                            <td className="py-3 px-4 font-black text-blue-400">{sku.sku}</td>
                             <td className="text-right py-3 px-4 font-bold text-red-400">{sku.mape.toFixed(1)}%</td>
                             <td className="text-right py-3 px-4 font-bold text-slate-300">{sku.accuracy.toFixed(1)}%</td>
                             <td className="text-right py-3 px-4 text-slate-400">{formatNumber(sku.rmse)}</td>
@@ -3038,10 +3025,10 @@ Always cite specific SKU IDs when making recommendations.`;
                 </section>
 
                 {/* 6-Month Backtest Analysis Ribbon - moved to bottom */}
-                <div className="bg-gradient-to-r from-indigo-600/20 to-emerald-600/20 border border-indigo-500/30 rounded-2xl p-6 shadow-lg">
+                <div className="bg-gradient-to-r from-blue-600/10 to-emerald-600/10 border border-blue-400/30 rounded-2xl p-6 shadow-lg">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-2">📊 6-Month Backtest Analysis</p>
+                      <p className="text-xs font-black text-blue-400 uppercase tracking-widest mb-2">📊 6-Month Backtest Analysis</p>
                       <p className="text-base font-black text-white mb-1">
                         {getQualityPageData(backtestResults.comparisonData || [], forecastStartMonth)[0]?.date} to {getQualityPageData(backtestResults.comparisonData || [], forecastStartMonth)[getQualityPageData(backtestResults.comparisonData || [], forecastStartMonth).length - 1]?.date}
                       </p>
@@ -3051,7 +3038,7 @@ Always cite specific SKU IDs when making recommendations.`;
                     </div>
                     <button 
                       onClick={handleExportBacktestDetail}
-                      className="flex-shrink-0 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-indigo-600/20 whitespace-nowrap"
+                      className="flex-shrink-0 px-4 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-blue-600/10 whitespace-nowrap"
                     >
                       <Download size={14} /> 
                       Export Detail
@@ -3060,8 +3047,8 @@ Always cite specific SKU IDs when making recommendations.`;
                 </div>
 
                 {anomalyRca && (
-                  <section className="bg-slate-900 border border-slate-800 p-6 rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-300">
-                    <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Sparkles size={14}/> Root Cause Analysis Results</h3>
+                  <section className="bg-black border border-slate-800 p-6 rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-300">
+                    <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Sparkles size={14}/> Root Cause Analysis Results</h3>
                     <div className="text-slate-300 text-xs leading-relaxed font-medium">{anomalyRca}</div>
                   </section>
                 )}
@@ -3075,7 +3062,7 @@ Always cite specific SKU IDs when making recommendations.`;
                    <MetricsCard label="Safety Stock" value={formatNumber(aggregatedForecast[0]?.safetyStock || 0)} description="Standard deviation buffer" />
                    <MetricsCard label="Reorder Point" value={formatNumber(aggregatedForecast[0]?.reorderPoint || 0)} description="Replenishment trigger" />
                 </section>
-                <section className="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
+                <section className="bg-black p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
                   <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6">Inventory Depletion Simulator</h3>
                   <div className="h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -3100,7 +3087,7 @@ Always cite specific SKU IDs when making recommendations.`;
                   </div>
                 </section>
 
-                <section className="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
+                <section className="bg-black p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                       <AlertTriangle size={16} className="text-red-400"/>
@@ -3115,10 +3102,10 @@ Always cite specific SKU IDs when making recommendations.`;
             {activeTab === 'sku-analysis' && (
               <div className="space-y-6">
                 {/* Analysis Period Memo */}
-                <section className="bg-gradient-to-r from-slate-950 to-slate-900 p-6 rounded-[2.5rem] border border-slate-700 shadow-2xl">
+                <section className="bg-black p-6 rounded-[2.5rem] border border-blue-400/30 shadow-2xl">
                   <div className="flex items-start gap-4">
-                    <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                      <Calendar size={20} className="text-blue-400" />
+                    <div className="p-3 rounded-xl border" style={{ backgroundColor: 'var(--ssa-blue)', backgroundOpacity: 0.1, borderColor: 'var(--ssa-curious-blue)' }}>
+                      <Calendar size={20} style={{ color: 'var(--ssa-curious-blue)' }} />
                     </div>
                     <div className="flex-1">
                       <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4">Analysis Period</h3>
@@ -3147,7 +3134,7 @@ Always cite specific SKU IDs when making recommendations.`;
                 </section>
 
                 {/* Portfolio Transformation Matrix */}
-                <section className="bg-slate-900 p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl">
+                <section className="bg-black p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl">
                   <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6">ABC Analysis - Portfolio Transformation</h3>
                   {/* Reorganized Portfolio Matrix: Charts on top, Counts below */}
                   <div className="grid grid-cols-3 gap-4">
@@ -3157,7 +3144,7 @@ Always cite specific SKU IDs when making recommendations.`;
                       <h4 className="text-[11px] font-black text-white uppercase tracking-widest text-center">Historical</h4>
                       
                       {/* Historical Stacked Chart */}
-                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                      <div className="bg-black p-4 rounded-xl border border-slate-800">
                         <ResponsiveContainer width="100%" height={220}>
                           <ComposedChart data={[
                             {
@@ -3180,7 +3167,7 @@ Always cite specific SKU IDs when making recommendations.`;
                                   const data = payload[0].payload;
                                   const total = (data.A || 0) + (data.B || 0) + (data.C || 0);
                                   return (
-                                    <div className="bg-slate-950 border border-slate-700 rounded p-2 text-[9px] space-y-1">
+                                    <div className="bg-black border border-slate-700 rounded p-2 text-[9px] space-y-1">
                                       <div className="text-slate-300 font-bold mb-1">Volume Breakdown:</div>
                                       {['A', 'B', 'C'].map(cls => {
                                         const value = data[cls] || 0;
@@ -3207,7 +3194,7 @@ Always cite specific SKU IDs when making recommendations.`;
                       </div>
 
                       {/* Historical Counts */}
-                      <div className="bg-slate-950 p-6 rounded-xl border border-slate-800">
+                      <div className="bg-black p-6 rounded-xl border border-slate-800">
                         <div className="space-y-4">
                           {['A', 'B', 'C'].map(grade => {
                             const count = paretoResults.filter(p => p.grade === grade).length;
@@ -3232,24 +3219,24 @@ Always cite specific SKU IDs when making recommendations.`;
 
                     {/* Category Shifts Column - Centered & Expanded */}
                     <div className="flex flex-col items-center h-full">
-                      <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 w-full h-full flex flex-col">
+                      <div className="bg-black p-6 rounded-xl border border-slate-800 w-full h-full flex flex-col">
                         <h4 className="text-[11px] font-black text-white uppercase tracking-widest text-center mb-5">Category Shifts</h4>
                         <div className="space-y-4 flex-1 flex flex-col justify-start">
                           {transformationMatrix.length === 0 ? (
                             <p className="text-[10px] text-slate-500 italic text-center">No category changes</p>
                           ) : (
                             transformationMatrix.map((shift, idx) => (
-                              <div key={idx} className="bg-slate-900 p-4 rounded-lg border border-slate-700 group relative cursor-help">
+                              <div key={idx} className="bg-black p-4 rounded-lg border border-slate-700 group relative cursor-help">
                                 <div className="flex items-center justify-center mb-2">
                                   <span className="text-[10px] font-bold text-slate-300 flex items-center gap-2">
-                                    <span className={`flex items-center justify-center w-9 h-9 rounded text-[13px] font-black ${shift.from === 'A' ? 'bg-indigo-600' : shift.from === 'B' ? 'bg-orange-600' : 'bg-slate-600'}`}>{shift.from}</span>
+                                    <span className={`flex items-center justify-center w-9 h-9 rounded text-[13px] font-black ${shift.from === 'A' ? 'bg-blue-700' : shift.from === 'B' ? 'bg-orange-600' : 'bg-slate-600'}`}>{shift.from}</span>
                                     <span className="text-[18px] leading-none">→</span>
-                                    <span className={`flex items-center justify-center w-9 h-9 rounded text-[13px] font-black ${shift.to === 'A' ? 'bg-indigo-600' : shift.to === 'B' ? 'bg-orange-600' : 'bg-slate-600'}`}>{shift.to}</span>
+                                    <span className={`flex items-center justify-center w-9 h-9 rounded text-[13px] font-black ${shift.to === 'A' ? 'bg-blue-700' : shift.to === 'B' ? 'bg-orange-600' : 'bg-slate-600'}`}>{shift.to}</span>
                                   </span>
                                 </div>
-                                <p className="text-[12px] font-black text-indigo-400 text-center">{shift.count} SKU{shift.count !== 1 ? 's' : ''}</p>
+                                <p className="text-[12px] font-black text-blue-400 text-center">{shift.count} SKU{shift.count !== 1 ? 's' : ''}</p>
                                 {/* Tooltip */}
-                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-slate-950 border border-slate-700 rounded text-[9px] text-slate-300 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black border border-slate-700 rounded text-[9px] text-slate-300 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
                                   Volume: {shift.volumeShift > 0 ? '+' : ''}{formatNumber(shift.volumeShift)}
                                 </div>
                               </div>
@@ -3265,7 +3252,7 @@ Always cite specific SKU IDs when making recommendations.`;
                       <h4 className="text-[11px] font-black text-white uppercase tracking-widest text-center">Forecasted</h4>
                       
                       {/* Forecasted Stacked Chart */}
-                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                      <div className="bg-black p-4 rounded-xl border border-slate-800">
                         <ResponsiveContainer width="100%" height={220}>
                           <ComposedChart data={[
                             {
@@ -3288,7 +3275,7 @@ Always cite specific SKU IDs when making recommendations.`;
                                   const data = payload[0].payload;
                                   const total = (data.A || 0) + (data.B || 0) + (data.C || 0);
                                   return (
-                                    <div className="bg-slate-950 border border-slate-700 rounded p-2 text-[9px] space-y-1">
+                                    <div className="bg-black border border-slate-700 rounded p-2 text-[9px] space-y-1">
                                       <div className="text-slate-300 font-bold mb-1">Volume Breakdown:</div>
                                       {['A', 'B', 'C'].map(cls => {
                                         const value = data[cls] || 0;
@@ -3315,7 +3302,7 @@ Always cite specific SKU IDs when making recommendations.`;
                       </div>
 
                       {/* Forecasted Counts */}
-                      <div className="bg-slate-950 p-6 rounded-xl border border-slate-800">
+                      <div className="bg-black p-6 rounded-xl border border-slate-800">
                         <div className="space-y-4">
                           {['A', 'B', 'C'].map(grade => {
                             const count = forecastParetoResults.filter(p => p.grade === grade).length;
@@ -3341,7 +3328,7 @@ Always cite specific SKU IDs when making recommendations.`;
                 </section>
 
                 {/* SKU Volatility Comparison - Historical vs Projected */}
-                <section className="bg-slate-900 p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl">
+                <section className="bg-black p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl">
                   <div className="flex justify-between items-center mb-4">
                     <div>
                       <h3 className="text-sm font-black text-white uppercase tracking-widest mb-2">SKU Volatility Analysis</h3>
@@ -3405,7 +3392,7 @@ Always cite specific SKU IDs when making recommendations.`;
                             const payload = props.payload[0]?.payload;
                             if (!payload) return null;
                             return (
-                              <div className="bg-slate-950 border border-slate-700 p-3 rounded-lg text-xs space-y-1">
+                              <div className="bg-black border border-slate-700 p-3 rounded-lg text-xs space-y-1">
                                 <p className="text-white font-bold mb-2">{payload.sku}</p>
                                 <p className="text-slate-400">Historic Volatility: <span className="text-blue-400 font-bold">{payload.Historic.toFixed(2)}%</span></p>
                                 <p className="text-slate-400">Projected Volatility: <span className="text-red-400 font-bold">{payload.Projected.toFixed(2)}%</span></p>
@@ -3422,7 +3409,7 @@ Always cite specific SKU IDs when making recommendations.`;
                 </section>
 
                 {/* Consolidated Volatility & Portfolio Mix Table */}
-                <section className="bg-slate-900 p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl">
+                <section className="bg-black p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl">
                   <div className="flex justify-between items-center mb-6">
                     <div>
                       <h3 className="text-sm font-black text-white uppercase tracking-widest mb-2">SKU Analysis - Volatility & Portfolio Mix</h3>
@@ -3484,13 +3471,13 @@ Always cite specific SKU IDs when making recommendations.`;
                             <tr key={i} className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-all">
                               <td className="p-3 text-slate-300 font-bold">{item.sku}</td>
                               <td className="text-right p-3">
-                                <span className={`px-2 py-1 rounded-full text-[8px] font-black uppercase ${classification === 'A' ? 'bg-indigo-500/20 text-indigo-400' : classification === 'B' ? 'bg-orange-500/20 text-orange-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                                <span className={`px-2 py-1 rounded-full text-[8px] font-black uppercase ${classification === 'A' ? 'bg-blue-600/20 text-blue-400' : classification === 'B' ? 'bg-orange-500/20 text-orange-400' : 'bg-slate-500/20 text-slate-400'}`}>
                                   {classification}
                                 </span>
                               </td>
                               <td className="text-right p-3 text-slate-300 font-bold">{item.volatility.toFixed(2)}%</td>
                               <td className="text-center p-3">
-                                <span className={`px-2 py-1 rounded-full text-[8px] font-black uppercase ${item.volatility > 50 ? 'bg-red-500/20 text-red-400' : item.volatility > 30 ? 'bg-orange-500/20 text-orange-400' : 'bg-indigo-500/20 text-indigo-400'}`}>
+                                <span className={`px-2 py-1 rounded-full text-[8px] font-black uppercase ${item.volatility > 50 ? 'bg-red-500/20 text-red-400' : item.volatility > 30 ? 'bg-orange-500/20 text-orange-400' : 'bg-blue-600/20 text-blue-400'}`}>
                                   {item.volatility > 50 ? 'High' : item.volatility > 30 ? 'Medium' : 'Low'}
                                 </span>
                               </td>
@@ -3533,3 +3520,7 @@ Always cite specific SKU IDs when making recommendations.`;
 };
 
 export default App;
+
+
+
+
